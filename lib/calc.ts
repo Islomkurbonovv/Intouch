@@ -3,7 +3,9 @@ import type { MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
 // ---- Table 1: marketing daily derived values ----
 
 export function marketingRow(m: MarketingDaily, plan: PlanSettings | null, monthDays: number) {
-  const sifatsiz = m.jami_lead - m.sifatli
+  // Guard against inverted data entry (sifatli > jami_lead) so the derived
+  // "unqualified" count can never render negative.
+  const sifatsiz = Math.max(0, m.jami_lead - m.sifatli)
   const leadNarxi = m.jami_lead ? m.byudjet / m.jami_lead : 0
   const sotuvNarxi = m.sotuv ? m.byudjet / m.sotuv : 0
   const sifatPct = m.jami_lead ? (m.sifatli / m.jami_lead) * 100 : 0
@@ -28,9 +30,13 @@ export function marketingTotals(
   const ortLeadNarxi = jamiLead ? jamiByudjet / jamiLead : 0
   const ortSotuvNarxi = jamiSotuv ? jamiByudjet / jamiSotuv : 0
 
-  // Plan completion = actual leads / total planned leads for the month
+  // Plan completion = actual / planned target for the month (guarded against 0 target)
   const rejaBajarilishi = plan && plan.plan_lead ? (jamiLead / plan.plan_lead) * 100 : 0
+  const rejaByudjetPct = plan && plan.plan_byudjet ? (jamiByudjet / plan.plan_byudjet) * 100 : 0
+  const rejaSotuvPct = plan && plan.plan_sotuv ? (jamiSotuv / plan.plan_sotuv) * 100 : 0
   const rejaLid = plan ? plan.plan_lead : 0
+  const rejaByudjet = plan ? plan.plan_byudjet : 0
+  const rejaSotuv = plan ? plan.plan_sotuv : 0
 
   return {
     jamiByudjet,
@@ -40,7 +46,11 @@ export function marketingTotals(
     ortLeadNarxi,
     ortSotuvNarxi,
     rejaBajarilishi,
+    rejaByudjetPct,
+    rejaSotuvPct,
     rejaLid,
+    rejaByudjet,
+    rejaSotuv,
   }
 }
 

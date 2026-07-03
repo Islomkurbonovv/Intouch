@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { logout } from "@/app/actions/auth"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   daysInMonth,
   yearMonths,
@@ -93,19 +94,19 @@ export function Dashboard({
       <Toaster position="top-center" richColors />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm ring-1 ring-inset ring-white/15">
               <BarChart3 className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold leading-tight">RNP Dashboard</h1>
+              <h1 className="text-lg font-semibold leading-tight tracking-tight">RNP Dashboard</h1>
               <p className="text-xs text-muted-foreground">{roleLabel(profile.role)} paneli</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <PeriodPicker view={view} month={month} year={year} />
 
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
@@ -113,10 +114,12 @@ export function Dashboard({
               <span className="hidden sm:inline">Eksport</span>
             </Button>
 
+            <ThemeToggle />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2" aria-label="Foydalanuvchi menyusi">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-sm font-medium text-secondary-foreground">
+                <Button variant="ghost" size="sm" className="gap-2 pl-1.5" aria-label="Foydalanuvchi menyusi">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-sm font-semibold text-primary ring-1 ring-inset ring-primary/20">
                     {profile.name.charAt(0).toUpperCase()}
                   </span>
                   <span className="hidden text-sm font-medium sm:inline">{profile.name}</span>
@@ -141,10 +144,11 @@ export function Dashboard({
           </div>
         </div>
         {usdRate ? (
-          <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6">
-            <p className="text-xs text-muted-foreground">
-              Barcha summalar dollarda. Markaziy bank kursi: 1$ = {fmt(usdRate)} so&apos;m
-            </p>
+          <div className="mx-auto max-w-7xl px-4 pb-2.5 sm:px-6">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+              Barcha summalar dollarda · MB kursi 1$ = {fmt(usdRate)} so&apos;m
+            </span>
           </div>
         ) : null}
       </header>

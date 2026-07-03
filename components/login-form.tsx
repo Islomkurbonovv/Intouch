@@ -12,8 +12,8 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, null)
 
   return (
-    <Card className="border-sidebar-border/50 shadow-lg">
-      <CardContent className="pt-6">
+    <Card className="rounded-2xl border-white/10 bg-card/95 shadow-2xl shadow-black/40 backdrop-blur-sm">
+      <CardContent className="p-6">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="login">Login</Label>

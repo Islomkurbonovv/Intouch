@@ -235,7 +235,7 @@ export function EmployeeResults({
                           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </TableCell>
-                      <TableCell className="sticky left-0 z-10 bg-inherit font-medium">
+                      <TableCell className="sticky left-0 z-10 bg-card font-medium">
                         <span className="flex items-center gap-2">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground">
                             {emp.name.charAt(0).toUpperCase()}

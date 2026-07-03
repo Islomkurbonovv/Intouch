@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/admin"
 import { getCurrentProfile } from "@/lib/auth"
-import { loginToEmail, isManagerRole, type Role } from "@/lib/rnp"
+import { loginToEmail, isManagerRole, daysInMonth, type Role } from "@/lib/rnp"
+
+// 'YYYY-MM' shape check used before trusting a client-supplied month.
+function isValidMonth(month: string): boolean {
+  return /^\d{4}-\d{2}$/.test(month)
+}
 
 type Result = { error?: string; ok?: boolean }
 
@@ -153,6 +158,14 @@ export async function upsertMarketingDay(input: {
   const me = await requireManager()
   if (!me) return { error: "Ruxsat yo'q" }
 
+  if (!isValidMonth(input.month)) return { error: "Noto'g'ri oy" }
+  if (input.day < 1 || input.day > daysInMonth(input.month)) {
+    return { error: "Noto'g'ri kun" }
+  }
+  if (!Number.isFinite(input.byudjet) || input.byudjet < 0) {
+    return { error: "Byudjet manfiy bo'lishi mumkin emas" }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.from("marketing_daily").upsert(
     {
@@ -214,6 +227,25 @@ export async function upsertEmployeeDay(input: {
   if (!profile) return { error: "Ruxsat yo'q" }
   if (!isManagerRole(profile.role) && profile.id !== input.employee_id) {
     return { error: "Faqat o'z natijalaringizni kirita olasiz" }
+  }
+
+  if (!isValidMonth(input.month)) return { error: "Noto'g'ri oy" }
+  if (input.day < 1 || input.day > daysInMonth(input.month)) {
+    return { error: "Noto'g'ri kun" }
+  }
+  const nums = [
+    input.gaplashgan,
+    input.sifatli,
+    input.aniqlanmagan,
+    input.sotilgan_mijoz,
+    input.sotilgan_mahsulot,
+    input.tushum,
+  ]
+  if (nums.some((n) => !Number.isFinite(n) || n < 0)) {
+    return { error: "Qiymatlar manfiy bo'lishi mumkin emas" }
+  }
+  if (input.sifatli > input.gaplashgan) {
+    return { error: "Sifatli lidlar gaplashgan lidlardan ko'p bo'lishi mumkin emas" }
   }
 
   const supabase = await createClient()

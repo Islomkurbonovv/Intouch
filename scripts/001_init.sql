@@ -73,14 +73,36 @@ create policy "read marketing"       on public.marketing_daily for select to aut
 create policy "read plan"            on public.plan_settings    for select to authenticated using (true);
 create policy "read employee_daily"  on public.employee_daily   for select to authenticated using (true);
 
--- Yozish (data jadvallariga; server action'lar rolni tekshiradi)
+-- Joriy foydalanuvchi menejer (super_admin/admin) ekanini aniqlaydi.
+-- SECURITY DEFINER — profiles RLS'iga rekursiya qilmasligi uchun.
+create or replace function public.is_manager()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('super_admin', 'admin')
+  );
+$$;
+
+grant execute on function public.is_manager() to authenticated;
+
+-- Yozish: rol/egalik bazaning o'zida (RLS) tekshiriladi.
+-- Byudjet va reja — faqat menejerlar; hodim natijalari — menejer yoki egasi.
 drop policy if exists "write marketing"      on public.marketing_daily;
 drop policy if exists "write plan"           on public.plan_settings;
 drop policy if exists "write employee_daily" on public.employee_daily;
 
-create policy "write marketing"      on public.marketing_daily for all to authenticated using (true) with check (true);
-create policy "write plan"           on public.plan_settings    for all to authenticated using (true) with check (true);
-create policy "write employee_daily" on public.employee_daily   for all to authenticated using (true) with check (true);
+create policy "write marketing"      on public.marketing_daily for all to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+create policy "write plan"           on public.plan_settings    for all to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+create policy "write employee_daily" on public.employee_daily   for all to authenticated
+  using (public.is_manager() or employee_id = auth.uid())
+  with check (public.is_manager() or employee_id = auth.uid());
 
 -- ============================================================
 -- Tayyor. Endi ilovaga /login orqali kiring:

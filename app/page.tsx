@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentProfile } from "@/lib/auth"
-import { currentMonth, currentYear } from "@/lib/rnp"
+import { currentMonth, currentYear, daysInMonth } from "@/lib/rnp"
 import { getUsdRate } from "@/lib/cbu"
 import { Dashboard } from "@/components/dashboard"
 import type { Profile, MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
@@ -52,6 +52,14 @@ export default async function Page({
     plan = (pl as PlanSettings) ?? null
     employeeDaily = (emp as EmployeeDaily[]) ?? []
   }
+
+  // Drop rows whose day exceeds their month's real day-count so the marketing
+  // and employee tables aggregate over the exact same set (they'd otherwise
+  // disagree — the marketing table only iterates real calendar days).
+  const inMonth = <T extends { month: string; day: number }>(rows: T[]) =>
+    rows.filter((r) => r.day >= 1 && r.day <= daysInMonth(r.month))
+  marketing = inMonth(marketing)
+  employeeDaily = inMonth(employeeDaily)
 
   const usdRate = await usdRatePromise
 

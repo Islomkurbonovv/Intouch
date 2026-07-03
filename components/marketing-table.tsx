@@ -146,13 +146,36 @@ export function MarketingTable({
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Jami Byudjet" value={fmtUsd(totals.jamiByudjet)} icon={DollarSign} tone="primary" />
-        <KpiCard label="Sifatli Lead" value={fmt(totals.jamiSifatli)} icon={BadgeCheck} tone="success" />
         <KpiCard label="Jami Lead" value={fmt(totals.jamiLead)} icon={Users} tone="default" />
+        <KpiCard label="Sifatli Lead" value={fmt(totals.jamiSifatli)} icon={BadgeCheck} tone="success" />
         <KpiCard label="Jami Sotuv" value={fmt(totals.jamiSotuv)} icon={ShoppingCart} tone="success" />
         <KpiCard label="O'rtacha Lead Narxi" value={fmtUsd(totals.ortLeadNarxi)} icon={TrendingDown} tone="default" />
         <KpiCard label="O'rtacha Sotuv Narxi" value={fmtUsd(totals.ortSotuvNarxi)} icon={Receipt} tone="default" />
-        <KpiCard label="Reja Bajarilishi %" value={`${fmt(totals.rejaBajarilishi)}%`} icon={Target} tone="warning" />
-        <KpiCard label="Reja Lid" value={fmt(totals.rejaLid)} icon={ListChecks} tone="primary" />
+        {plan ? (
+          <>
+            <KpiCard
+              label="Byudjet reja %"
+              value={`${fmt(totals.rejaByudjetPct)}%`}
+              icon={Target}
+              tone="warning"
+              hint={`Reja: ${fmtUsd(totals.rejaByudjet)}`}
+            />
+            <KpiCard
+              label="Lid reja %"
+              value={`${fmt(totals.rejaBajarilishi)}%`}
+              icon={ListChecks}
+              tone="warning"
+              hint={`Reja: ${fmt(totals.rejaLid)} lid`}
+            />
+            <KpiCard
+              label="Sotuv reja %"
+              value={`${fmt(totals.rejaSotuvPct)}%`}
+              icon={Target}
+              tone="warning"
+              hint={`Reja: ${fmt(totals.rejaSotuv)} sotuv`}
+            />
+          </>
+        ) : null}
       </div>
 
       <Card className="border-border bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -273,7 +296,7 @@ export function MarketingTable({
                 <TableCell className="sticky left-0 z-10 bg-muted/40">Jami</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.jamiByudjet)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead - totals.jamiSifatli)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmt(Math.max(0, totals.jamiLead - totals.jamiSifatli))}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortLeadNarxi)}</TableCell>
