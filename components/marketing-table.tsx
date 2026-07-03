@@ -28,8 +28,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
+import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertMarketingDay } from "@/app/actions/data"
-import { fmt, fmtCur, fmtMoney } from "@/lib/rnp"
+import { fmt, fmtUsd, fmtUsdPlain, somToUsd, toUsd } from "@/lib/rnp"
 import { marketingRow, marketingTotals } from "@/lib/calc"
 import type {
   MarketingDaily,
@@ -37,7 +38,7 @@ import type {
   EmployeeDaily,
   Period,
   Granularity,
-  Currency,
+  InputCurrency,
 } from "@/lib/rnp"
 
 export function MarketingTable({
@@ -49,7 +50,6 @@ export function MarketingTable({
   employeeDaily,
   plan,
   canEdit,
-  currency,
   usdRate,
 }: {
   month: string
@@ -60,11 +60,11 @@ export function MarketingTable({
   employeeDaily: EmployeeDaily[]
   plan: PlanSettings | null
   canEdit: boolean
-  currency: Currency
   usdRate: number
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [draftByudjet, setDraftByudjet] = useState("")
+  const [draftCurrency, setDraftCurrency] = useState<InputCurrency>("USD")
   const [pending, startTransition] = useTransition()
 
   const monthDays = granularity === "day" ? periods.length : 1
@@ -117,15 +117,18 @@ export function MarketingTable({
 
   function startEdit(key: string) {
     setEditingKey(key)
+    setDraftCurrency("USD")
     setDraftByudjet(String(byudjetByPeriod.get(key) ?? ""))
   }
 
   function save(day: number, key: string) {
+    // Budget is stored in USD; a so'm amount is converted at the CBU rate.
+    const byudjetUsd = toUsd(Number(draftByudjet) || 0, draftCurrency, usdRate)
     startTransition(async () => {
       const res = await upsertMarketingDay({
         month,
         day,
-        byudjet: Number(draftByudjet) || 0,
+        byudjet: byudjetUsd,
       })
       if (res.error) {
         toast.error(res.error)
@@ -142,19 +145,21 @@ export function MarketingTable({
     <div className="flex flex-col gap-5">
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Jami Byudjet" value={fmtMoney(totals.jamiByudjet, currency, usdRate)} icon={DollarSign} tone="primary" />
+        <KpiCard label="Jami Byudjet" value={fmtUsd(totals.jamiByudjet)} icon={DollarSign} tone="primary" />
         <KpiCard label="Sifatli Lead" value={fmt(totals.jamiSifatli)} icon={BadgeCheck} tone="success" />
         <KpiCard label="Jami Lead" value={fmt(totals.jamiLead)} icon={Users} tone="default" />
         <KpiCard label="Jami Sotuv" value={fmt(totals.jamiSotuv)} icon={ShoppingCart} tone="success" />
-        <KpiCard label="O'rtacha Lead Narxi" value={fmtMoney(totals.ortLeadNarxi, currency, usdRate)} icon={TrendingDown} tone="default" />
-        <KpiCard label="O'rtacha Sotuv Narxi" value={fmtMoney(totals.ortSotuvNarxi, currency, usdRate)} icon={Receipt} tone="default" />
+        <KpiCard label="O'rtacha Lead Narxi" value={fmtUsd(totals.ortLeadNarxi)} icon={TrendingDown} tone="default" />
+        <KpiCard label="O'rtacha Sotuv Narxi" value={fmtUsd(totals.ortSotuvNarxi)} icon={Receipt} tone="default" />
         <KpiCard label="Reja Bajarilishi %" value={`${fmt(totals.rejaBajarilishi)}%`} icon={Target} tone="warning" />
         <KpiCard label="Reja Lid" value={fmt(totals.rejaLid)} icon={ListChecks} tone="primary" />
       </div>
 
       <Card className="border-border bg-muted/40 p-3 text-sm text-muted-foreground">
         Sifatli, Jami Lead va Sotuv ustunlari sotuvchilar kiritgan ma&apos;lumotlardan avtomatik yig&apos;iladi.
-        {canEdit ? " Faqat byudjetni siz kiritasiz." : ""}
+        {canEdit
+          ? " Faqat byudjetni siz kiritasiz — $ yoki so'mda (so'm avtomatik dollarga aylanadi). Barcha summalar dollarda ko'rsatiladi."
+          : " Barcha summalar dollarda ko'rsatiladi."}
       </Card>
 
       {!plan && canEdit ? (
@@ -197,15 +202,25 @@ export function MarketingTable({
                         {period.label}
                       </TableCell>
                       <TableCell>
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          value={draftByudjet}
-                          onChange={(e) => setDraftByudjet(e.target.value)}
-                          className="h-8 w-24 text-right"
-                          aria-label="Byudjet (so'm)"
-                          autoFocus
-                        />
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              value={draftByudjet}
+                              onChange={(e) => setDraftByudjet(e.target.value)}
+                              className="h-8 w-24 text-right"
+                              aria-label={draftCurrency === "UZS" ? "Byudjet (so'm)" : "Byudjet ($)"}
+                              autoFocus
+                            />
+                            <MoneyCurrencyToggle value={draftCurrency} onChange={setDraftCurrency} rate={usdRate} />
+                          </div>
+                          {draftCurrency === "UZS" && usdRate ? (
+                            <span className="text-[10px] tabular-nums text-muted-foreground">
+                              ≈ ${fmtUsdPlain(somToUsd(Number(draftByudjet) || 0, usdRate))}
+                            </span>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sifatli)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(d.sifatsiz)}</TableCell>
@@ -231,13 +246,13 @@ export function MarketingTable({
                 return (
                   <TableRow key={period.key} className={hasData ? "" : "text-muted-foreground"}>
                     <TableCell className="sticky left-0 z-10 bg-card font-medium">{period.label}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtCur(row.byudjet, currency, usdRate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(row.byudjet)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(row.sifatli)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(d.sifatsiz)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(row.jami_lead)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(row.sotuv)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtCur(d.leadNarxi, currency, usdRate)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtCur(d.sotuvNarxi, currency, usdRate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.leadNarxi)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.sotuvNarxi)}</TableCell>
                     <TableCell className="text-right"><PctBadge value={d.sifatPct} /></TableCell>
                     <TableCell className="text-right"><PctBadge value={d.konversiyaPct} /></TableCell>
                     <TableCell className="text-right tabular-nums">{plan ? fmt(d.rejaLid) : "—"}</TableCell>
@@ -256,13 +271,13 @@ export function MarketingTable({
               {/* Totals row */}
               <TableRow className="border-t-2 bg-muted/40 font-semibold">
                 <TableCell className="sticky left-0 z-10 bg-muted/40">Jami</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtCur(totals.jamiByudjet, currency, usdRate)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.jamiByudjet)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead - totals.jamiSifatli)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtCur(totals.ortLeadNarxi, currency, usdRate)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtCur(totals.ortSotuvNarxi, currency, usdRate)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortLeadNarxi)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortSotuvNarxi)}</TableCell>
                 <TableCell className="text-right tabular-nums" colSpan={2}>—</TableCell>
                 <TableCell className="text-right tabular-nums">{plan ? fmt(totals.rejaLid) : "—"}</TableCell>
                 <TableCell className="text-right">{plan ? <PctBadge value={totals.rejaBajarilishi} /> : "—"}</TableCell>

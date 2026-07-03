@@ -14,7 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
 import { logout } from "@/app/actions/auth"
 import {
   daysInMonth,
@@ -24,7 +23,6 @@ import {
   isManagerRole,
   roleLabel,
   fmt,
-  type Currency,
   type Granularity,
   type Period,
   type Profile,
@@ -63,7 +61,6 @@ export function Dashboard({
   const isManager = isManagerRole(profile.role)
   const isYearly = view === "yearly"
   const [tab, setTab] = useState("marketing")
-  const [currency, setCurrency] = useState<Currency>("UZS")
 
   const monthDays = daysInMonth(month)
   const granularity: Granularity = isYearly ? "month" : "day"
@@ -109,38 +106,6 @@ export function Dashboard({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Currency toggle */}
-            <div className="flex items-center gap-2">
-              <div className="flex rounded-lg border border-border bg-background p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setCurrency("UZS")}
-                  className={cn(
-                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                    currency === "UZS"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  so&apos;m
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrency("USD")}
-                  disabled={!usdRate}
-                  className={cn(
-                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-40",
-                    currency === "USD"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                  title={usdRate ? undefined : "Kurs mavjud emas"}
-                >
-                  $
-                </button>
-              </div>
-            </div>
-
             <PeriodPicker view={view} month={month} year={year} />
 
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
@@ -175,10 +140,10 @@ export function Dashboard({
             </DropdownMenu>
           </div>
         </div>
-        {currency === "USD" && usdRate ? (
+        {usdRate ? (
           <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6">
             <p className="text-xs text-muted-foreground">
-              Markaziy bank kursi: 1$ = {fmt(usdRate)} so&apos;m
+              Barcha summalar dollarda. Markaziy bank kursi: 1$ = {fmt(usdRate)} so&apos;m
             </p>
           </div>
         ) : null}
@@ -213,7 +178,6 @@ export function Dashboard({
               employeeDaily={employeeDaily}
               plan={isYearly ? null : plan}
               canEdit={isManager && !isYearly}
-              currency={currency}
               usdRate={usdRate}
             />
           </TabsContent>
@@ -228,7 +192,6 @@ export function Dashboard({
               employeeDaily={employeeDaily}
               profile={profile}
               canEditData={!isYearly}
-              currency={currency}
               usdRate={usdRate}
             />
           </TabsContent>

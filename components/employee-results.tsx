@@ -26,15 +26,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
+import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertEmployeeDay } from "@/app/actions/data"
-import { fmt, fmtCur, fmtMoney, isManagerRole } from "@/lib/rnp"
+import { fmt, fmtUsd, fmtUsdPlain, somToUsd, toUsd, isManagerRole } from "@/lib/rnp"
 import { aggregateEmployee, employeeDerived, emptyAgg, type EmployeeAgg } from "@/lib/calc"
 import type {
   Profile,
   EmployeeDaily,
   Period,
   Granularity,
-  Currency,
+  InputCurrency,
 } from "@/lib/rnp"
 
 type DayDraft = {
@@ -66,7 +67,6 @@ export function EmployeeResults({
   employeeDaily,
   profile,
   canEditData,
-  currency,
   usdRate,
 }: {
   month: string
@@ -77,13 +77,13 @@ export function EmployeeResults({
   employeeDaily: EmployeeDaily[]
   profile: Profile
   canEditData: boolean
-  currency: Currency
   usdRate: number
 }) {
   const isManager = isManagerRole(profile.role)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editKey, setEditKey] = useState<string | null>(null)
   const [draft, setDraft] = useState<DayDraft>(EMPTY_DRAFT)
+  const [tushumCurrency, setTushumCurrency] = useState<InputCurrency>("USD")
   const [pending, startTransition] = useTransition()
 
   const dailyByEmployee = useMemo(() => {
@@ -142,6 +142,7 @@ export function EmployeeResults({
   function startEdit(empId: string, periodKey: string) {
     const agg = periodAgg(empId, periodKey)
     setEditKey(periodKey)
+    setTushumCurrency("USD")
     setDraft({
       gaplashgan: agg.gaplashgan ? String(agg.gaplashgan) : "",
       sifatli: agg.sifatli ? String(agg.sifatli) : "",
@@ -153,6 +154,8 @@ export function EmployeeResults({
   }
 
   function saveDay(empId: string, periodKey: string) {
+    // Revenue is stored in USD; a so'm amount is converted at the CBU rate.
+    const tushumUsd = toUsd(Number(draft.tushum) || 0, tushumCurrency, usdRate)
     startTransition(async () => {
       const res = await upsertEmployeeDay({
         employee_id: empId,
@@ -163,7 +166,7 @@ export function EmployeeResults({
         aniqlanmagan: Number(draft.aniqlanmagan) || 0,
         sotilgan_mijoz: Number(draft.sotilgan_mijoz) || 0,
         sotilgan_mahsulot: Number(draft.sotilgan_mahsulot) || 0,
-        tushum: Number(draft.tushum) || 0,
+        tushum: tushumUsd,
       })
       if (res.error) {
         toast.error(res.error)
@@ -180,7 +183,7 @@ export function EmployeeResults({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Jami gaplashgan lid" value={fmt(totals.gaplashgan)} icon={Users} tone="default" />
         <KpiCard label="Jami sotilgan mijoz" value={fmt(totals.sotilgan_mijoz)} icon={ShoppingCart} tone="success" />
-        <KpiCard label="Jami tushum" value={fmtMoney(totals.tushum, currency, usdRate)} icon={DollarSign} tone="primary" />
+        <KpiCard label="Jami tushum" value={fmtUsd(totals.tushum)} icon={DollarSign} tone="primary" />
         <KpiCard label="O'rtacha konversiya %" value={`${fmt(totalsDerived.konversiyaPct)}%`} icon={Percent} tone="warning" />
       </div>
 
@@ -245,10 +248,10 @@ export function EmployeeResults({
                       <TableCell className="text-right tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtCur(agg.tushum, currency, usdRate)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtUsdPlain(agg.tushum)}</TableCell>
                       <TableCell className="text-right"><PctBadge value={der.sifatPct} /></TableCell>
                       <TableCell className="text-right"><PctBadge value={der.konversiyaPct} /></TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtCur(der.ortachaChek, currency, usdRate)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtUsdPlain(der.ortachaChek)}</TableCell>
                     </TableRow>
 
                     {isOpen ? (
@@ -287,7 +290,17 @@ export function EmployeeResults({
                                           <TableCell><Input type="number" value={draft.aniqlanmagan} onChange={(e) => setDraft({ ...draft, aniqlanmagan: e.target.value })} className="h-8 w-20 text-right" aria-label="Aniqlanmagan" /></TableCell>
                                           <TableCell><Input type="number" value={draft.sotilgan_mijoz} onChange={(e) => setDraft({ ...draft, sotilgan_mijoz: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mijoz" /></TableCell>
                                           <TableCell><Input type="number" value={draft.sotilgan_mahsulot} onChange={(e) => setDraft({ ...draft, sotilgan_mahsulot: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mahsulot" /></TableCell>
-                                          <TableCell><Input type="number" inputMode="decimal" value={draft.tushum} onChange={(e) => setDraft({ ...draft, tushum: e.target.value })} className="h-8 w-24 text-right" aria-label="Tushum (so'm)" /></TableCell>
+                                          <TableCell>
+                                            <div className="flex flex-col items-end gap-1">
+                                              <div className="flex items-center gap-1">
+                                                <Input type="number" inputMode="decimal" value={draft.tushum} onChange={(e) => setDraft({ ...draft, tushum: e.target.value })} className="h-8 w-24 text-right" aria-label={tushumCurrency === "UZS" ? "Tushum (so'm)" : "Tushum ($)"} />
+                                                <MoneyCurrencyToggle value={tushumCurrency} onChange={setTushumCurrency} rate={usdRate} />
+                                              </div>
+                                              {tushumCurrency === "UZS" && usdRate ? (
+                                                <span className="text-[10px] tabular-nums text-muted-foreground">≈ ${fmtUsdPlain(somToUsd(Number(draft.tushum) || 0, usdRate))}</span>
+                                              ) : null}
+                                            </div>
+                                          </TableCell>
                                           <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
                                               <Button size="icon" className="h-8 w-8" onClick={() => saveDay(emp.id, period.key)} disabled={pending} aria-label="Saqlash"><Check className="h-4 w-4" /></Button>
@@ -306,7 +319,7 @@ export function EmployeeResults({
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mijoz)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mahsulot)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmtCur(pAgg.tushum, currency, usdRate)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmtUsdPlain(pAgg.tushum)}</TableCell>
                                         {editable ? (
                                           <TableCell className="text-right">
                                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(emp.id, period.key)} aria-label={`${period.label} tahrirlash`}>
@@ -338,10 +351,10 @@ export function EmployeeResults({
                   <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtCur(totals.tushum, currency, usdRate)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.tushum)}</TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtCur(totalsDerived.ortachaChek, currency, usdRate)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtUsdPlain(totalsDerived.ortachaChek)}</TableCell>
                 </TableRow>
               ) : null}
             </TableBody>

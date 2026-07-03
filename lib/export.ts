@@ -8,7 +8,7 @@ function round(n: number, d = 2) {
   return Math.round(n * f) / f
 }
 
-// All money is stored and exported in so'm (base currency).
+// All money is stored and exported in USD (base currency).
 export function exportWorkbook(opts: {
   label: string
   marketing: MarketingDaily[]
@@ -19,7 +19,7 @@ export function exportWorkbook(opts: {
   const wb = XLSX.utils.book_new()
 
   // Sheet 1: marketing budget per day
-  const sheet1: (string | number)[][] = [["Oy", "Kun", "Byudjet (so'm)"]]
+  const sheet1: (string | number)[][] = [["Oy", "Kun", "Byudjet ($)"]]
   const sortedMk = [...marketing].sort((a, b) =>
     a.month === b.month ? a.day - b.day : a.month < b.month ? -1 : 1,
   )
@@ -37,10 +37,10 @@ export function exportWorkbook(opts: {
       "Aniqlanmagan",
       "Sotilgan mijoz",
       "Sotilgan mahsulot",
-      "Tushum (so'm)",
+      "Tushum ($)",
       "Sifat %",
       "Konversiya %",
-      "O'rtacha chek (so'm)",
+      "O'rtacha chek ($)",
     ],
   ]
   for (const emp of employees) {
@@ -73,7 +73,7 @@ export function exportWorkbook(opts: {
       "Aniqlanmagan",
       "Sotilgan mijoz",
       "Sotilgan mahsulot",
-      "Tushum (so'm)",
+      "Tushum ($)",
     ],
   ]
   for (const emp of employees) {

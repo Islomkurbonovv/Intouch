@@ -120,33 +120,32 @@ export function fmt(n: number) {
   return new Intl.NumberFormat("ru-RU").format(Math.round(n))
 }
 
-// ---- Currency (base data is stored in so'm; USD is converted via CBU rate) ----
+// ---- Currency: all money is stored in USD (base currency). ----
+// The CBU rate is only used to convert a so'm-entered amount to USD at entry time.
 
-export type Currency = "UZS" | "USD"
+// Currency a money amount is entered in. Storage/display is always USD.
+export type InputCurrency = "USD" | "UZS"
 
-export function toCurrency(som: number, currency: Currency, rate: number): number {
-  if (currency === "USD") return rate ? som / rate : 0
-  return som
+// USD amount without symbol (for table cells): "1,234.56"
+export function fmtUsdPlain(usd: number): string {
+  if (usd === null || usd === undefined || Number.isNaN(usd)) return "0"
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(usd)
 }
 
-// Number only, no suffix (for table cells). USD shows up to 2 decimals.
-export function fmtCur(som: number, currency: Currency, rate: number): string {
-  if (currency === "USD") {
-    const v = rate ? som / rate : 0
-    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(v)
-  }
-  return fmt(som)
+// USD amount with the $ symbol (for KPI cards and totals): "$1,234.56"
+export function fmtUsd(usd: number): string {
+  return `$${fmtUsdPlain(usd)}`
 }
 
-// With symbol/suffix (for KPI cards and totals).
-export function fmtMoney(som: number, currency: Currency, rate: number): string {
-  if (currency === "USD") return `$${fmtCur(som, currency, rate)}`
-  return `${fmt(som)} so'm`
+// Convert a so'm amount to USD via the CBU rate (returns 0 if the rate is unknown).
+export function somToUsd(som: number, rate: number): number {
+  return rate ? som / rate : 0
 }
 
-// Legacy helper (kept for any remaining callers)
-export function fmtSom(n: number) {
-  return `${fmt(n)} so'm`
+// Normalize an entered money amount to USD. A so'm amount is converted at the
+// CBU rate; a USD amount is stored as-is.
+export function toUsd(amount: number, from: InputCurrency, rate: number): number {
+  return from === "UZS" ? somToUsd(amount, rate) : amount
 }
 
 // Percentage helper
