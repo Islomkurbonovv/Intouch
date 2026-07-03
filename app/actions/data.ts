@@ -4,35 +4,44 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/admin"
 import { getCurrentProfile } from "@/lib/auth"
-import { loginToEmail } from "@/lib/rnp"
+import { loginToEmail, isManagerRole, type Role } from "@/lib/rnp"
 
 type Result = { error?: string; ok?: boolean }
 
-async function requireAdmin() {
+function normRole(r: string): Role {
+  if (r === "super_admin") return "super_admin"
+  if (r === "admin") return "admin"
+  return "salesperson"
+}
+
+// Manager = super_admin or admin (can view whole dashboard and manage data).
+async function requireManager() {
   const profile = await getCurrentProfile()
-  if (!profile || profile.role !== "admin") {
-    return null
-  }
+  if (!profile || !isManagerRole(profile.role)) return null
   return profile
 }
 
-// ---------- Employees (admin only) ----------
+// ---------- Employees (managers only) ----------
 
 export async function createEmployee(formData: FormData): Promise<Result> {
-  const admin = await requireAdmin()
-  if (!admin) return { error: "Ruxsat yo'q" }
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
 
   const name = String(formData.get("name") ?? "").trim()
   const login = String(formData.get("login") ?? "").trim().toLowerCase()
   const password = String(formData.get("password") ?? "")
-  const role = String(formData.get("role") ?? "salesperson")
+  const role = normRole(String(formData.get("role") ?? "salesperson"))
+
+  // Only a super_admin can create other managers.
+  if (role !== "salesperson" && me.role !== "super_admin") {
+    return { error: "Faqat bosh admin admin qo'sha oladi" }
+  }
 
   if (!name || !login || !password) return { error: "Barcha maydonlarni to'ldiring" }
   if (password.length < 6) return { error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }
 
   const svc = createServiceClient()
 
-  // Ensure login is unique
   const { data: existing } = await svc.from("profiles").select("id").eq("login", login).maybeSingle()
   if (existing) return { error: "Bu login band" }
 
@@ -51,11 +60,10 @@ export async function createEmployee(formData: FormData): Promise<Result> {
     id: created.user.id,
     name,
     login,
-    role: role === "admin" ? "admin" : "salesperson",
+    role,
   })
 
   if (pErr) {
-    // Roll back the auth user if profile insert failed
     await svc.auth.admin.deleteUser(created.user.id)
     return { error: pErr.message }
   }
@@ -65,20 +73,30 @@ export async function createEmployee(formData: FormData): Promise<Result> {
 }
 
 export async function updateEmployee(formData: FormData): Promise<Result> {
-  const admin = await requireAdmin()
-  if (!admin) return { error: "Ruxsat yo'q" }
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
 
   const id = String(formData.get("id") ?? "")
   const name = String(formData.get("name") ?? "").trim()
   const login = String(formData.get("login") ?? "").trim().toLowerCase()
   const password = String(formData.get("password") ?? "")
-  const role = String(formData.get("role") ?? "salesperson")
+  const role = normRole(String(formData.get("role") ?? "salesperson"))
 
   if (!id || !name || !login) return { error: "Barcha maydonlarni to'ldiring" }
 
   const svc = createServiceClient()
 
-  // Uniqueness check (excluding self)
+  // Fetch the target's current role to enforce permissions.
+  const { data: target } = await svc.from("profiles").select("role").eq("id", id).maybeSingle()
+  const targetRole = target ? normRole(String(target.role)) : "salesperson"
+
+  // A plain admin cannot touch managers, nor promote anyone to a manager role.
+  if (me.role !== "super_admin") {
+    if (targetRole !== "salesperson" || role !== "salesperson") {
+      return { error: "Faqat bosh admin adminlarni boshqara oladi" }
+    }
+  }
+
   const { data: existing } = await svc
     .from("profiles")
     .select("id")
@@ -87,13 +105,9 @@ export async function updateEmployee(formData: FormData): Promise<Result> {
     .maybeSingle()
   if (existing) return { error: "Bu login band" }
 
-  const { error: pErr } = await svc
-    .from("profiles")
-    .update({ name, login, role: role === "admin" ? "admin" : "salesperson" })
-    .eq("id", id)
+  const { error: pErr } = await svc.from("profiles").update({ name, login, role }).eq("id", id)
   if (pErr) return { error: pErr.message }
 
-  // Update auth email + optional password
   const authUpdate: { email: string; password?: string } = { email: loginToEmail(login) }
   if (password) {
     if (password.length < 6) return { error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }
@@ -107,11 +121,20 @@ export async function updateEmployee(formData: FormData): Promise<Result> {
 }
 
 export async function deleteEmployee(id: string): Promise<Result> {
-  const admin = await requireAdmin()
-  if (!admin) return { error: "Ruxsat yo'q" }
-  if (id === admin.id) return { error: "O'zingizni o'chira olmaysiz" }
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
+  if (id === me.id) return { error: "O'zingizni o'chira olmaysiz" }
 
   const svc = createServiceClient()
+
+  const { data: target } = await svc.from("profiles").select("role").eq("id", id).maybeSingle()
+  const targetRole = target ? normRole(String(target.role)) : "salesperson"
+
+  // A plain admin can only delete salespeople.
+  if (me.role !== "super_admin" && targetRole !== "salesperson") {
+    return { error: "Faqat bosh admin adminlarni o'chira oladi" }
+  }
+
   const { error } = await svc.auth.admin.deleteUser(id) // cascades to profiles + employee_daily
   if (error) return { error: error.message }
 
@@ -119,18 +142,16 @@ export async function deleteEmployee(id: string): Promise<Result> {
   return { ok: true }
 }
 
-// ---------- Marketing daily (admin only) ----------
+// ---------- Marketing daily: only the budget is entered here now ----------
+// (Sifatli / Jami Lead / Sotuv are aggregated from employees, not stored here.)
 
 export async function upsertMarketingDay(input: {
   month: string
   day: number
   byudjet: number
-  sifatli: number
-  jami_lead: number
-  sotuv: number
 }): Promise<Result> {
-  const admin = await requireAdmin()
-  if (!admin) return { error: "Ruxsat yo'q" }
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
 
   const supabase = await createClient()
   const { error } = await supabase.from("marketing_daily").upsert(
@@ -138,9 +159,6 @@ export async function upsertMarketingDay(input: {
       month: input.month,
       day: input.day,
       byudjet: input.byudjet,
-      sifatli: input.sifatli,
-      jami_lead: input.jami_lead,
-      sotuv: input.sotuv,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "month,day" },
@@ -151,7 +169,7 @@ export async function upsertMarketingDay(input: {
   return { ok: true }
 }
 
-// ---------- Plan settings (admin only) ----------
+// ---------- Plan settings (managers only) ----------
 
 export async function upsertPlanSettings(input: {
   month: string
@@ -159,8 +177,8 @@ export async function upsertPlanSettings(input: {
   plan_lead: number
   plan_sotuv: number
 }): Promise<Result> {
-  const admin = await requireAdmin()
-  if (!admin) return { error: "Ruxsat yo'q" }
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
 
   const supabase = await createClient()
   const { error } = await supabase.from("plan_settings").upsert(
@@ -179,7 +197,7 @@ export async function upsertPlanSettings(input: {
   return { ok: true }
 }
 
-// ---------- Employee daily (own, or admin) ----------
+// ---------- Employee daily (own, or a manager) ----------
 
 export async function upsertEmployeeDay(input: {
   employee_id: string
@@ -194,7 +212,7 @@ export async function upsertEmployeeDay(input: {
 }): Promise<Result> {
   const profile = await getCurrentProfile()
   if (!profile) return { error: "Ruxsat yo'q" }
-  if (profile.role !== "admin" && profile.id !== input.employee_id) {
+  if (!isManagerRole(profile.role) && profile.id !== input.employee_id) {
     return { error: "Faqat o'z natijalaringizni kirita olasiz" }
   }
 

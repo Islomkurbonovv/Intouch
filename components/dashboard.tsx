@@ -1,19 +1,11 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import { BarChart3, Download, LogOut, Settings, Users } from "lucide-react"
+import { BarChart3, Download, LogOut, Settings } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,55 +14,82 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import { logout } from "@/app/actions/auth"
-import { recentMonths, monthLabel, daysInMonth } from "@/lib/rnp"
-import type {
-  Profile,
-  MarketingDaily,
-  PlanSettings,
-  EmployeeDaily,
+import {
+  daysInMonth,
+  yearMonths,
+  monthShortLabel,
+  monthLabel,
+  isManagerRole,
+  roleLabel,
+  fmt,
+  type Currency,
+  type Granularity,
+  type Period,
+  type Profile,
+  type MarketingDaily,
+  type PlanSettings,
+  type EmployeeDaily,
 } from "@/lib/rnp"
 import { exportWorkbook } from "@/lib/export"
 import { MarketingTable } from "@/components/marketing-table"
 import { EmployeeResults } from "@/components/employee-results"
 import { EmployeesManager } from "@/components/employees-manager"
 import { PlanSettingsDialog } from "@/components/plan-settings-dialog"
+import { PeriodPicker } from "@/components/period-picker"
 
 export function Dashboard({
   profile,
+  view,
   month,
+  year,
   employees,
   marketing,
   plan,
   employeeDaily,
+  usdRate,
 }: {
   profile: Profile
+  view: "monthly" | "yearly"
   month: string
+  year: number
   employees: Profile[]
   marketing: MarketingDaily[]
   plan: PlanSettings | null
   employeeDaily: EmployeeDaily[]
+  usdRate: number
 }) {
-  const router = useRouter()
-  const isAdmin = profile.role === "admin"
+  const isManager = isManagerRole(profile.role)
+  const isYearly = view === "yearly"
   const [tab, setTab] = useState("marketing")
-  const months = useMemo(() => recentMonths(12), [])
-  const monthDays = daysInMonth(month)
+  const [currency, setCurrency] = useState<Currency>("UZS")
 
-  function changeMonth(m: string) {
-    router.push(`/?month=${m}`)
-  }
+  const monthDays = daysInMonth(month)
+  const granularity: Granularity = isYearly ? "month" : "day"
+
+  const periods: Period[] = useMemo(() => {
+    if (isYearly) {
+      return yearMonths(year).map((m) => ({ key: m, label: monthShortLabel(m) }))
+    }
+    return Array.from({ length: monthDays }, (_, i) => ({
+      key: String(i + 1),
+      label: String(i + 1),
+    }))
+  }, [isYearly, year, monthDays])
+
+  const salespeople = employees.filter((e) => e.role === "salesperson")
+
+  const periodLabel = isYearly ? `${year}-yil` : monthLabel(month)
 
   function handleExport() {
     try {
-      exportWorkbook({ month, marketing, plan, employees, employeeDaily, monthDays })
+      exportWorkbook({ label: periodLabel, marketing, employees: salespeople, employeeDaily })
       toast.success("Excel fayli yuklab olindi")
-    } catch (e) {
+    } catch {
       toast.error("Eksport qilishda xatolik")
     }
   }
-
-  const salespeople = employees.filter((e) => e.role === "salesperson")
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,25 +104,44 @@ export function Dashboard({
             </div>
             <div>
               <h1 className="text-lg font-semibold leading-tight">RNP Dashboard</h1>
-              <p className="text-xs text-muted-foreground">
-                {isAdmin ? "Administrator paneli" : "Hodim paneli"}
-              </p>
+              <p className="text-xs text-muted-foreground">{roleLabel(profile.role)} paneli</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Select value={month} onValueChange={changeMonth}>
-              <SelectTrigger className="w-[150px] bg-background" aria-label="Oyni tanlash">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {monthLabel(m)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Currency toggle */}
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-lg border border-border bg-background p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrency("UZS")}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    currency === "UZS"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  so&apos;m
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency("USD")}
+                  disabled={!usdRate}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-40",
+                    currency === "USD"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  title={usdRate ? undefined : "Kurs mavjud emas"}
+                >
+                  $
+                </button>
+              </div>
+            </div>
+
+            <PeriodPicker view={view} month={month} year={year} />
 
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
               <Download className="h-4 w-4" aria-hidden="true" />
@@ -112,12 +150,7 @@ export function Dashboard({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  aria-label="Foydalanuvchi menyusi"
-                >
+                <Button variant="ghost" size="sm" className="gap-2" aria-label="Foydalanuvchi menyusi">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-sm font-medium text-secondary-foreground">
                     {profile.name.charAt(0).toUpperCase()}
                   </span>
@@ -129,7 +162,7 @@ export function Dashboard({
                   <div className="flex flex-col">
                     <span>{profile.name}</span>
                     <span className="text-xs font-normal text-muted-foreground">
-                      @{profile.login}
+                      @{profile.login} · {roleLabel(profile.role)}
                     </span>
                   </div>
                 </DropdownMenuLabel>
@@ -142,6 +175,13 @@ export function Dashboard({
             </DropdownMenu>
           </div>
         </div>
+        {currency === "USD" && usdRate ? (
+          <div className="mx-auto max-w-7xl px-4 pb-2 sm:px-6">
+            <p className="text-xs text-muted-foreground">
+              Markaziy bank kursi: 1$ = {fmt(usdRate)} so&apos;m
+            </p>
+          </div>
+        ) : null}
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -150,10 +190,10 @@ export function Dashboard({
             <TabsList>
               <TabsTrigger value="marketing">Kunlik Ma&apos;lumotlar</TabsTrigger>
               <TabsTrigger value="employees">Hodimlar natijalari</TabsTrigger>
-              {isAdmin ? <TabsTrigger value="manage">Hodimlar</TabsTrigger> : null}
+              {isManager ? <TabsTrigger value="manage">Hodimlar</TabsTrigger> : null}
             </TabsList>
 
-            {isAdmin && tab === "marketing" ? (
+            {isManager && tab === "marketing" && !isYearly ? (
               <PlanSettingsDialog month={month} plan={plan}>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Settings className="h-4 w-4" aria-hidden="true" />
@@ -166,26 +206,36 @@ export function Dashboard({
           <TabsContent value="marketing" className="mt-0">
             <MarketingTable
               month={month}
-              monthDays={monthDays}
+              periods={periods}
+              granularity={granularity}
+              periodHeader={isYearly ? "Oy" : "Kun"}
               marketing={marketing}
-              plan={plan}
-              canEdit={isAdmin}
+              employeeDaily={employeeDaily}
+              plan={isYearly ? null : plan}
+              canEdit={isManager && !isYearly}
+              currency={currency}
+              usdRate={usdRate}
             />
           </TabsContent>
 
           <TabsContent value="employees" className="mt-0">
             <EmployeeResults
               month={month}
-              monthDays={monthDays}
+              periods={periods}
+              granularity={granularity}
+              periodHeader={isYearly ? "Oy" : "Kun"}
               employees={salespeople}
               employeeDaily={employeeDaily}
               profile={profile}
+              canEditData={!isYearly}
+              currency={currency}
+              usdRate={usdRate}
             />
           </TabsContent>
 
-          {isAdmin ? (
+          {isManager ? (
             <TabsContent value="manage" className="mt-0">
-              <EmployeesManager employees={employees} currentId={profile.id} />
+              <EmployeesManager employees={employees} me={profile} />
             </TabsContent>
           ) : null}
         </Tabs>

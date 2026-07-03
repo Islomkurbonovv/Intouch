@@ -6,15 +6,16 @@ import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/admin"
 import { loginToEmail } from "@/lib/rnp"
 
-// Ensures a default admin exists so the app is usable on first run.
+// Ensures a default super-admin exists so the app is usable on first run.
 // Default credentials: login "admin", password "admin12345".
 export async function ensureSeedAdmin() {
   const admin = createServiceClient()
 
+  // If any manager (super_admin or admin) already exists, do nothing.
   const { count } = await admin
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("role", "admin")
+    .in("role", ["super_admin", "admin"])
 
   if (count && count > 0) return
 
@@ -38,7 +39,7 @@ export async function ensureSeedAdmin() {
     id: created.user.id,
     name: "Administrator",
     login,
-    role: "admin",
+    role: "super_admin",
   })
 }
 

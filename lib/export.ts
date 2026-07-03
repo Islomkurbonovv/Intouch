@@ -1,66 +1,34 @@
 import * as XLSX from "xlsx"
-import type { Profile, MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
-import { monthLabel } from "@/lib/rnp"
-import {
-  marketingRow,
-  aggregateEmployee,
-  employeeDerived,
-} from "@/lib/calc"
+import type { Profile, MarketingDaily, EmployeeDaily } from "@/lib/rnp"
+import { monthShortLabel } from "@/lib/rnp"
+import { aggregateEmployee, employeeDerived } from "@/lib/calc"
 
 function round(n: number, d = 2) {
   const f = Math.pow(10, d)
   return Math.round(n * f) / f
 }
 
+// All money is stored and exported in so'm (base currency).
 export function exportWorkbook(opts: {
-  month: string
+  label: string
   marketing: MarketingDaily[]
-  plan: PlanSettings | null
   employees: Profile[]
   employeeDaily: EmployeeDaily[]
-  monthDays: number
 }) {
-  const { month, marketing, plan, employees, employeeDaily, monthDays } = opts
+  const { label, marketing, employees, employeeDaily } = opts
   const wb = XLSX.utils.book_new()
 
-  // Sheet 1: marketing daily
-  const sheet1: (string | number)[][] = [
-    [
-      "Kun",
-      "Byudjet ($)",
-      "Sifatli",
-      "Sifatsiz",
-      "Jami Lead",
-      "Sotuv",
-      "Lead Narxi",
-      "Sotuv Narxi",
-      "Sifat %",
-      "Konversiya %",
-      "Reja Lid",
-      "Reja %",
-    ],
-  ]
-  for (const m of marketing) {
-    const d = marketingRow(m, plan, monthDays)
-    sheet1.push([
-      m.day,
-      round(Number(m.byudjet)),
-      m.sifatli,
-      d.sifatsiz,
-      m.jami_lead,
-      m.sotuv,
-      round(d.leadNarxi),
-      round(d.sotuvNarxi),
-      round(d.sifatPct),
-      round(d.konversiyaPct),
-      round(d.rejaLid),
-      round(d.rejaPct),
-    ])
+  // Sheet 1: marketing budget per day
+  const sheet1: (string | number)[][] = [["Oy", "Kun", "Byudjet (so'm)"]]
+  const sortedMk = [...marketing].sort((a, b) =>
+    a.month === b.month ? a.day - b.day : a.month < b.month ? -1 : 1,
+  )
+  for (const m of sortedMk) {
+    sheet1.push([monthShortLabel(m.month), m.day, round(Number(m.byudjet))])
   }
-  const ws1 = XLSX.utils.aoa_to_sheet(sheet1)
-  XLSX.utils.book_append_sheet(wb, ws1, "Kunlik Malumotlar")
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheet1), "Byudjet")
 
-  // Sheet 2: employee results
+  // Sheet 2: per-employee totals
   const sheet2: (string | number)[][] = [
     [
       "Hodim",
@@ -69,10 +37,10 @@ export function exportWorkbook(opts: {
       "Aniqlanmagan",
       "Sotilgan mijoz",
       "Sotilgan mahsulot",
-      "Tushum ($)",
+      "Tushum (so'm)",
       "Sifat %",
       "Konversiya %",
-      "O'rtacha chek",
+      "O'rtacha chek (so'm)",
     ],
   ]
   for (const emp of employees) {
@@ -92,29 +60,30 @@ export function exportWorkbook(opts: {
       round(der.ortachaChek),
     ])
   }
-  const ws2 = XLSX.utils.aoa_to_sheet(sheet2)
-  XLSX.utils.book_append_sheet(wb, ws2, "Hodimlar natijalari")
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheet2), "Hodimlar jami")
 
   // Sheet 3: employee daily breakdown
   const sheet3: (string | number)[][] = [
     [
       "Hodim",
+      "Oy",
       "Kun",
       "Gaplashgan",
       "Sifatli",
       "Aniqlanmagan",
       "Sotilgan mijoz",
       "Sotilgan mahsulot",
-      "Tushum ($)",
+      "Tushum (so'm)",
     ],
   ]
   for (const emp of employees) {
     const days = employeeDaily
       .filter((e) => e.employee_id === emp.id)
-      .sort((a, b) => a.day - b.day)
+      .sort((a, b) => (a.month === b.month ? a.day - b.day : a.month < b.month ? -1 : 1))
     for (const d of days) {
       sheet3.push([
         emp.name,
+        monthShortLabel(d.month),
         d.day,
         d.gaplashgan,
         d.sifatli,
@@ -125,9 +94,8 @@ export function exportWorkbook(opts: {
       ])
     }
   }
-  const ws3 = XLSX.utils.aoa_to_sheet(sheet3)
-  XLSX.utils.book_append_sheet(wb, ws3, "Kunlik hodim natijalari")
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheet3), "Hodimlar kunlik")
 
-  const safeLabel = monthLabel(month).replace(/\s+/g, "_")
+  const safeLabel = label.replace(/\s+/g, "_")
   XLSX.writeFile(wb, `RNP_Dashboard_${safeLabel}.xlsx`)
 }

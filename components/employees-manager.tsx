@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createEmployee, updateEmployee, deleteEmployee } from "@/app/actions/data"
-import type { Profile, Role } from "@/lib/rnp"
+import { roleLabel, type Profile, type Role } from "@/lib/rnp"
 
 type FormState = {
   name: string
@@ -52,30 +52,30 @@ type FormState = {
   role: Role
 }
 
-const EMPTY_FORM: FormState = {
-  name: "",
-  login: "",
-  password: "",
-  role: "salesperson",
-}
+const EMPTY_FORM: FormState = { name: "", login: "", password: "", role: "salesperson" }
 
-function roleLabel(role: Role) {
-  return role === "admin" ? "Administrator" : "Sotuvchi"
-}
-
-export function EmployeesManager({
-  employees,
-  currentId,
-}: {
-  employees: Profile[]
-  currentId: string
-}) {
+export function EmployeesManager({ employees, me }: { employees: Profile[]; me: Profile }) {
   const router = useRouter()
+  const isSuper = me.role === "super_admin"
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Profile | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
   const [pending, startTransition] = useTransition()
+
+  // A plain admin can only touch salespeople.
+  function canManage(emp: Profile) {
+    if (emp.id === me.id) return true
+    return isSuper || emp.role === "salesperson"
+  }
+
+  const roleOptions: { value: Role; label: string }[] = isSuper
+    ? [
+        { value: "salesperson", label: "Sotuvchi" },
+        { value: "admin", label: "Admin" },
+        { value: "super_admin", label: "Bosh admin" },
+      ]
+    : [{ value: "salesperson", label: "Sotuvchi" }]
 
   function openAdd() {
     setEditing(null)
@@ -131,6 +131,12 @@ export function EmployeesManager({
     })
   }
 
+  function badgeVariant(role: Role): "default" | "secondary" | "outline" {
+    if (role === "super_admin") return "default"
+    if (role === "admin") return "outline"
+    return "secondary"
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -165,50 +171,36 @@ export function EmployeesManager({
                   </TableCell>
                 </TableRow>
               ) : null}
-              {employees.map((emp) => (
-                <TableRow key={emp.id}>
-                  <TableCell className="font-medium">
-                    <span className="flex items-center gap-2">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground">
-                        {emp.name.charAt(0).toUpperCase()}
+              {employees.map((emp) => {
+                const manageable = canManage(emp)
+                return (
+                  <TableRow key={emp.id}>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground">
+                          {emp.name.charAt(0).toUpperCase()}
+                        </span>
+                        {emp.name}
+                        {emp.id === me.id ? <span className="text-xs text-muted-foreground">(siz)</span> : null}
                       </span>
-                      {emp.name}
-                      {emp.id === currentId ? (
-                        <span className="text-xs text-muted-foreground">(siz)</span>
-                      ) : null}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">@{emp.login}</TableCell>
-                  <TableCell>
-                    <Badge variant={emp.role === "admin" ? "default" : "secondary"}>
-                      {roleLabel(emp.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => openEdit(emp)}
-                        aria-label={`${emp.name}ni tahrirlash`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => setDeleteTarget(emp)}
-                        disabled={emp.id === currentId}
-                        aria-label={`${emp.name}ni o'chirish`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">@{emp.login}</TableCell>
+                    <TableCell>
+                      <Badge variant={badgeVariant(emp.role)}>{roleLabel(emp.role)}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(emp)} disabled={!manageable} aria-label={`${emp.name}ni tahrirlash`}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setDeleteTarget(emp)} disabled={!manageable || emp.id === me.id} aria-label={`${emp.name}ni o'chirish`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
@@ -229,48 +221,33 @@ export function EmployeesManager({
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="emp-name">Ism</Label>
-              <Input
-                id="emp-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="To'liq ism"
-              />
+              <Input id="emp-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="To'liq ism" />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="emp-login">Login</Label>
-              <Input
-                id="emp-login"
-                value={form.login}
-                onChange={(e) => setForm({ ...form, login: e.target.value })}
-                placeholder="masalan: alisher"
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
+              <Input id="emp-login" value={form.login} onChange={(e) => setForm({ ...form, login: e.target.value })} placeholder="masalan: alisher" autoCapitalize="none" autoCorrect="off" />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="emp-password">Parol</Label>
-              <Input
-                id="emp-password"
-                type="text"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={editing ? "Bo'sh qoldiring — o'zgarmaydi" : "Kamida 6 belgi"}
-              />
+              <Input id="emp-password" type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? "Bo'sh qoldiring — o'zgarmaydi" : "Kamida 6 belgi"} />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="emp-role">Rol</Label>
-              <Select
-                value={form.role}
-                onValueChange={(v) => setForm({ ...form, role: v as Role })}
-              >
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as Role })} disabled={roleOptions.length === 1}>
                 <SelectTrigger id="emp-role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="salesperson">Sotuvchi</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
+                  {roleOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {!isSuper ? (
+                <p className="text-xs text-muted-foreground">Faqat bosh admin admin qo&apos;sha oladi.</p>
+              ) : null}
             </div>
           </div>
 
@@ -294,21 +271,14 @@ export function EmployeesManager({
               {deleteTarget ? (
                 <>
                   <span className="font-medium text-foreground">{deleteTarget.name}</span> o&apos;chiriladi.
-                  Uning barcha kunlik natijalari ham o&apos;chib ketadi. Bu amalni ortga qaytarib bo&apos;lmaydi.
+                  Uning barcha natijalari ham o&apos;chib ketadi. Bu amalni ortga qaytarib bo&apos;lmaydi.
                 </>
               ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Bekor qilish</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                confirmDelete()
-              }}
-              disabled={pending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmDelete() }} disabled={pending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               O&apos;chirish
             </AlertDialogAction>
           </AlertDialogFooter>

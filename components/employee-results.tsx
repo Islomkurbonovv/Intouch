@@ -27,14 +27,15 @@ import { Input } from "@/components/ui/input"
 import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
 import { upsertEmployeeDay } from "@/app/actions/data"
-import { fmt, fmtSom } from "@/lib/rnp"
-import {
-  aggregateEmployee,
-  employeeDerived,
-  emptyAgg,
-  type EmployeeAgg,
-} from "@/lib/calc"
-import type { Profile, EmployeeDaily } from "@/lib/rnp"
+import { fmt, fmtCur, fmtMoney, isManagerRole } from "@/lib/rnp"
+import { aggregateEmployee, employeeDerived, emptyAgg, type EmployeeAgg } from "@/lib/calc"
+import type {
+  Profile,
+  EmployeeDaily,
+  Period,
+  Granularity,
+  Currency,
+} from "@/lib/rnp"
 
 type DayDraft = {
   gaplashgan: string
@@ -54,29 +55,37 @@ const EMPTY_DRAFT: DayDraft = {
   tushum: "",
 }
 
-// Total number of columns in the main table (for colSpan on expanded rows)
 const COLS = 11
 
 export function EmployeeResults({
   month,
-  monthDays,
+  periods,
+  granularity,
+  periodHeader,
   employees,
   employeeDaily,
   profile,
+  canEditData,
+  currency,
+  usdRate,
 }: {
   month: string
-  monthDays: number
+  periods: Period[]
+  granularity: Granularity
+  periodHeader: string
   employees: Profile[]
   employeeDaily: EmployeeDaily[]
   profile: Profile
+  canEditData: boolean
+  currency: Currency
+  usdRate: number
 }) {
-  const isAdmin = profile.role === "admin"
+  const isManager = isManagerRole(profile.role)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [editDay, setEditDay] = useState<number | null>(null)
+  const [editKey, setEditKey] = useState<string | null>(null)
   const [draft, setDraft] = useState<DayDraft>(EMPTY_DRAFT)
   const [pending, startTransition] = useTransition()
 
-  // Group daily rows by employee id
   const dailyByEmployee = useMemo(() => {
     const m = new Map<string, EmployeeDaily[]>()
     for (const d of employeeDaily) {
@@ -87,7 +96,6 @@ export function EmployeeResults({
     return m
   }, [employeeDaily])
 
-  // Aggregates per employee
   const aggByEmployee = useMemo(() => {
     const m = new Map<string, EmployeeAgg>()
     for (const emp of employees) {
@@ -96,7 +104,6 @@ export function EmployeeResults({
     return m
   }, [employees, dailyByEmployee])
 
-  // Overall totals (across ALL salespeople — this is the "umumiy jami")
   const totals = useMemo(() => {
     const acc = emptyAgg()
     for (const emp of employees) {
@@ -113,39 +120,44 @@ export function EmployeeResults({
 
   const totalsDerived = employeeDerived(totals)
 
-  // A salesperson sees only their own row + the overall total.
-  const visibleEmployees = isAdmin
-    ? employees
-    : employees.filter((e) => e.id === profile.id)
+  const visibleEmployees = isManager ? employees : employees.filter((e) => e.id === profile.id)
 
   function canEdit(empId: string) {
-    return isAdmin || profile.id === empId
+    return canEditData && granularity === "day" && (isManager || profile.id === empId)
+  }
+
+  // Aggregate one employee's rows for a given period key
+  function periodAgg(empId: string, periodKey: string): EmployeeAgg {
+    const rows = (dailyByEmployee.get(empId) ?? []).filter((r) =>
+      granularity === "day" ? String(r.day) === periodKey : r.month === periodKey,
+    )
+    return aggregateEmployee(rows)
   }
 
   function toggleExpand(empId: string) {
-    setEditDay(null)
+    setEditKey(null)
     setExpandedId((cur) => (cur === empId ? null : empId))
   }
 
-  function startEdit(empId: string, day: number) {
-    const row = (dailyByEmployee.get(empId) ?? []).find((d) => d.day === day)
-    setEditDay(day)
+  function startEdit(empId: string, periodKey: string) {
+    const agg = periodAgg(empId, periodKey)
+    setEditKey(periodKey)
     setDraft({
-      gaplashgan: row ? String(row.gaplashgan) : "",
-      sifatli: row ? String(row.sifatli) : "",
-      aniqlanmagan: row ? String(row.aniqlanmagan) : "",
-      sotilgan_mijoz: row ? String(row.sotilgan_mijoz) : "",
-      sotilgan_mahsulot: row ? String(row.sotilgan_mahsulot) : "",
-      tushum: row ? String(row.tushum) : "",
+      gaplashgan: agg.gaplashgan ? String(agg.gaplashgan) : "",
+      sifatli: agg.sifatli ? String(agg.sifatli) : "",
+      aniqlanmagan: agg.aniqlanmagan ? String(agg.aniqlanmagan) : "",
+      sotilgan_mijoz: agg.sotilgan_mijoz ? String(agg.sotilgan_mijoz) : "",
+      sotilgan_mahsulot: agg.sotilgan_mahsulot ? String(agg.sotilgan_mahsulot) : "",
+      tushum: agg.tushum ? String(agg.tushum) : "",
     })
   }
 
-  function saveDay(empId: string, day: number) {
+  function saveDay(empId: string, periodKey: string) {
     startTransition(async () => {
       const res = await upsertEmployeeDay({
         employee_id: empId,
         month,
-        day,
+        day: Number(periodKey),
         gaplashgan: Number(draft.gaplashgan) || 0,
         sifatli: Number(draft.sifatli) || 0,
         aniqlanmagan: Number(draft.aniqlanmagan) || 0,
@@ -157,8 +169,8 @@ export function EmployeeResults({
         toast.error(res.error)
         return
       }
-      toast.success(`${day}-kun saqlandi`)
-      setEditDay(null)
+      toast.success(`${periodKey}-kun saqlandi`)
+      setEditKey(null)
     })
   }
 
@@ -168,13 +180,13 @@ export function EmployeeResults({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Jami gaplashgan lid" value={fmt(totals.gaplashgan)} icon={Users} tone="default" />
         <KpiCard label="Jami sotilgan mijoz" value={fmt(totals.sotilgan_mijoz)} icon={ShoppingCart} tone="success" />
-        <KpiCard label="Jami tushum" value={fmtSom(totals.tushum)} icon={DollarSign} tone="primary" />
+        <KpiCard label="Jami tushum" value={fmtMoney(totals.tushum, currency, usdRate)} icon={DollarSign} tone="primary" />
         <KpiCard label="O'rtacha konversiya %" value={`${fmt(totalsDerived.konversiyaPct)}%`} icon={Percent} tone="warning" />
       </div>
 
-      {!isAdmin ? (
+      {!isManager ? (
         <Card className="border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-          Siz faqat o&apos;z natijalaringizni kirita olasiz. Umumiy jami barcha hodimlar bo&apos;yicha ko&apos;rsatilgan.
+          Siz {canEditData ? "o'z natijalaringizni kiritasiz" : "o'z natijalaringizni ko'rasiz"}. Umumiy jami barcha hodimlar bo&apos;yicha.
         </Card>
       ) : null}
 
@@ -211,25 +223,13 @@ export function EmployeeResults({
                 const der = employeeDerived(agg)
                 const isOpen = expandedId === emp.id
                 const editable = canEdit(emp.id)
-                const empDays = dailyByEmployee.get(emp.id) ?? []
-                const dayMap = new Map(empDays.map((d) => [d.day, d]))
 
                 return (
                   <Fragment key={emp.id}>
                     <TableRow className={isOpen ? "bg-accent/30" : ""}>
                       <TableCell className="w-8">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => toggleExpand(emp.id)}
-                          aria-label={isOpen ? "Yopish" : "Kunlarni ochish"}
-                        >
-                          {isOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleExpand(emp.id)} aria-label={isOpen ? "Yopish" : "Ochish"}>
+                          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </TableCell>
                       <TableCell className="sticky left-0 z-10 bg-inherit font-medium">
@@ -245,28 +245,24 @@ export function EmployeeResults({
                       <TableCell className="text-right tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.tushum)}</TableCell>
-                      <TableCell className="text-right">
-                        <PctBadge value={der.sifatPct} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <PctBadge value={der.konversiyaPct} />
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(der.ortachaChek)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtCur(agg.tushum, currency, usdRate)}</TableCell>
+                      <TableCell className="text-right"><PctBadge value={der.sifatPct} /></TableCell>
+                      <TableCell className="text-right"><PctBadge value={der.konversiyaPct} /></TableCell>
+                      <TableCell className="text-right tabular-nums">{fmtCur(der.ortachaChek, currency, usdRate)}</TableCell>
                     </TableRow>
 
                     {isOpen ? (
-                      <TableRow key={`${emp.id}-days`} className="hover:bg-transparent">
+                      <TableRow className="hover:bg-transparent">
                         <TableCell colSpan={COLS} className="bg-muted/30 p-0">
                           <div className="p-3">
                             <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
-                              {emp.name} — kunlik taqsimot
+                              {emp.name} — {periodHeader.toLowerCase()} bo&apos;yicha
                             </p>
                             <div className="overflow-x-auto rounded-lg border border-border bg-card">
                               <Table>
                                 <TableHeader>
                                   <TableRow className="bg-muted/40">
-                                    <TableHead className="w-14">Kun</TableHead>
+                                    <TableHead className="w-16">{periodHeader}</TableHead>
                                     <TableHead className="text-right">Gaplashgan</TableHead>
                                     <TableHead className="text-right">Sifatli</TableHead>
                                     <TableHead className="text-right">Aniqlanmagan</TableHead>
@@ -277,90 +273,25 @@ export function EmployeeResults({
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                  {Array.from({ length: monthDays }, (_, i) => i + 1).map((day) => {
-                                    const row = dayMap.get(day)
-                                    const isEditing = editable && editDay === day
+                                  {periods.map((period) => {
+                                    const pAgg = periodAgg(emp.id, period.key)
+                                    const isEditing = editable && editKey === period.key
+                                    const has = pAgg.gaplashgan > 0 || pAgg.tushum > 0 || pAgg.sotilgan_mijoz > 0
 
                                     if (isEditing) {
                                       return (
-                                        <TableRow key={day} className="bg-accent/40">
-                                          <TableCell className="font-medium">{day}</TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              value={draft.gaplashgan}
-                                              onChange={(e) => setDraft({ ...draft, gaplashgan: e.target.value })}
-                                              className="h-8 w-20 text-right"
-                                              aria-label="Gaplashgan"
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              value={draft.sifatli}
-                                              onChange={(e) => setDraft({ ...draft, sifatli: e.target.value })}
-                                              className="h-8 w-20 text-right"
-                                              aria-label="Sifatli"
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              value={draft.aniqlanmagan}
-                                              onChange={(e) => setDraft({ ...draft, aniqlanmagan: e.target.value })}
-                                              className="h-8 w-20 text-right"
-                                              aria-label="Aniqlanmagan"
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              value={draft.sotilgan_mijoz}
-                                              onChange={(e) => setDraft({ ...draft, sotilgan_mijoz: e.target.value })}
-                                              className="h-8 w-20 text-right"
-                                              aria-label="Sotilgan mijoz"
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              value={draft.sotilgan_mahsulot}
-                                              onChange={(e) => setDraft({ ...draft, sotilgan_mahsulot: e.target.value })}
-                                              className="h-8 w-20 text-right"
-                                              aria-label="Sotilgan mahsulot"
-                                            />
-                                          </TableCell>
-                                          <TableCell>
-                                            <Input
-                                              type="number"
-                                              inputMode="decimal"
-                                              value={draft.tushum}
-                                              onChange={(e) => setDraft({ ...draft, tushum: e.target.value })}
-                                              className="h-8 w-24 text-right"
-                                              aria-label="Tushum"
-                                            />
-                                          </TableCell>
+                                        <TableRow key={period.key} className="bg-accent/40">
+                                          <TableCell className="font-medium">{period.label}</TableCell>
+                                          <TableCell><Input type="number" value={draft.gaplashgan} onChange={(e) => setDraft({ ...draft, gaplashgan: e.target.value })} className="h-8 w-20 text-right" aria-label="Gaplashgan" /></TableCell>
+                                          <TableCell><Input type="number" value={draft.sifatli} onChange={(e) => setDraft({ ...draft, sifatli: e.target.value })} className="h-8 w-20 text-right" aria-label="Sifatli" /></TableCell>
+                                          <TableCell><Input type="number" value={draft.aniqlanmagan} onChange={(e) => setDraft({ ...draft, aniqlanmagan: e.target.value })} className="h-8 w-20 text-right" aria-label="Aniqlanmagan" /></TableCell>
+                                          <TableCell><Input type="number" value={draft.sotilgan_mijoz} onChange={(e) => setDraft({ ...draft, sotilgan_mijoz: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mijoz" /></TableCell>
+                                          <TableCell><Input type="number" value={draft.sotilgan_mahsulot} onChange={(e) => setDraft({ ...draft, sotilgan_mahsulot: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mahsulot" /></TableCell>
+                                          <TableCell><Input type="number" inputMode="decimal" value={draft.tushum} onChange={(e) => setDraft({ ...draft, tushum: e.target.value })} className="h-8 w-24 text-right" aria-label="Tushum (so'm)" /></TableCell>
                                           <TableCell className="text-right">
                                             <div className="flex justify-end gap-1">
-                                              <Button
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => saveDay(emp.id, day)}
-                                                disabled={pending}
-                                                aria-label="Saqlash"
-                                              >
-                                                <Check className="h-4 w-4" />
-                                              </Button>
-                                              <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-8 w-8"
-                                                onClick={() => setEditDay(null)}
-                                                disabled={pending}
-                                                aria-label="Bekor qilish"
-                                              >
-                                                <X className="h-4 w-4" />
-                                              </Button>
+                                              <Button size="icon" className="h-8 w-8" onClick={() => saveDay(emp.id, period.key)} disabled={pending} aria-label="Saqlash"><Check className="h-4 w-4" /></Button>
+                                              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEditKey(null)} disabled={pending} aria-label="Bekor qilish"><X className="h-4 w-4" /></Button>
                                             </div>
                                           </TableCell>
                                         </TableRow>
@@ -368,23 +299,17 @@ export function EmployeeResults({
                                     }
 
                                     return (
-                                      <TableRow key={day} className={row ? "" : "text-muted-foreground"}>
-                                        <TableCell className="font-medium">{day}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(row?.gaplashgan ?? 0)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(row?.sifatli ?? 0)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(row?.aniqlanmagan ?? 0)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(row?.sotilgan_mijoz ?? 0)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(row?.sotilgan_mahsulot ?? 0)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(Number(row?.tushum ?? 0))}</TableCell>
+                                      <TableRow key={period.key} className={has ? "" : "text-muted-foreground"}>
+                                        <TableCell className="font-medium">{period.label}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.gaplashgan)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatli)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mijoz)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mahsulot)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmtCur(pAgg.tushum, currency, usdRate)}</TableCell>
                                         {editable ? (
                                           <TableCell className="text-right">
-                                            <Button
-                                              size="icon"
-                                              variant="ghost"
-                                              className="h-8 w-8"
-                                              onClick={() => startEdit(emp.id, day)}
-                                              aria-label={`${day}-kunni tahrirlash`}
-                                            >
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(emp.id, period.key)} aria-label={`${period.label} tahrirlash`}>
                                               <Pencil className="h-4 w-4" />
                                             </Button>
                                           </TableCell>
@@ -403,7 +328,7 @@ export function EmployeeResults({
                 )
               })}
 
-              {/* Totals row (overall — all salespeople) */}
+              {/* Totals row */}
               {visibleEmployees.length > 0 ? (
                 <TableRow className="border-t-2 bg-muted/40 font-semibold">
                   <TableCell className="w-8" />
@@ -413,14 +338,10 @@ export function EmployeeResults({
                   <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.tushum)}</TableCell>
-                  <TableCell className="text-right">
-                    <PctBadge value={totalsDerived.sifatPct} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <PctBadge value={totalsDerived.konversiyaPct} />
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totalsDerived.ortachaChek)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtCur(totals.tushum, currency, usdRate)}</TableCell>
+                  <TableCell className="text-right"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
+                  <TableCell className="text-right"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtCur(totalsDerived.ortachaChek, currency, usdRate)}</TableCell>
                 </TableRow>
               ) : null}
             </TableBody>

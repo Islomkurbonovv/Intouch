@@ -29,97 +29,133 @@ import { Input } from "@/components/ui/input"
 import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
 import { upsertMarketingDay } from "@/app/actions/data"
-import { fmt, fmtSom } from "@/lib/rnp"
+import { fmt, fmtCur, fmtMoney } from "@/lib/rnp"
 import { marketingRow, marketingTotals } from "@/lib/calc"
-import type { MarketingDaily, PlanSettings } from "@/lib/rnp"
-
-type EditState = {
-  byudjet: string
-  sifatli: string
-  jami_lead: string
-  sotuv: string
-}
+import type {
+  MarketingDaily,
+  PlanSettings,
+  EmployeeDaily,
+  Period,
+  Granularity,
+  Currency,
+} from "@/lib/rnp"
 
 export function MarketingTable({
   month,
-  monthDays,
+  periods,
+  granularity,
+  periodHeader,
   marketing,
+  employeeDaily,
   plan,
   canEdit,
+  currency,
+  usdRate,
 }: {
   month: string
-  monthDays: number
+  periods: Period[]
+  granularity: Granularity
+  periodHeader: string
   marketing: MarketingDaily[]
+  employeeDaily: EmployeeDaily[]
   plan: PlanSettings | null
   canEdit: boolean
+  currency: Currency
+  usdRate: number
 }) {
-  const [editingDay, setEditingDay] = useState<number | null>(null)
-  const [draft, setDraft] = useState<EditState>({
-    byudjet: "",
-    sifatli: "",
-    jami_lead: "",
-    sotuv: "",
-  })
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [draftByudjet, setDraftByudjet] = useState("")
   const [pending, startTransition] = useTransition()
 
-  // Map day -> row for quick lookup
-  const byDay = useMemo(() => {
-    const m = new Map<number, MarketingDaily>()
-    for (const r of marketing) m.set(r.day, r)
+  const monthDays = granularity === "day" ? periods.length : 1
+
+  // Budget grouped by period key (day number or 'YYYY-MM')
+  const byudjetByPeriod = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of marketing) {
+      const key = granularity === "day" ? String(r.day) : r.month
+      m.set(key, (m.get(key) ?? 0) + Number(r.byudjet))
+    }
     return m
-  }, [marketing])
+  }, [marketing, granularity])
 
-  const totals = useMemo(() => marketingTotals(marketing, plan), [marketing, plan])
+  // Employee sums grouped by period key (this is the sync source)
+  const empByPeriod = useMemo(() => {
+    const m = new Map<string, { gaplashgan: number; sifatli: number; sotilgan_mijoz: number }>()
+    for (const d of employeeDaily) {
+      const key = granularity === "day" ? String(d.day) : d.month
+      const cur = m.get(key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0 }
+      cur.gaplashgan += d.gaplashgan
+      cur.sifatli += d.sifatli
+      cur.sotilgan_mijoz += d.sotilgan_mijoz
+      m.set(key, cur)
+    }
+    return m
+  }, [employeeDaily, granularity])
 
-  const days = Array.from({ length: monthDays }, (_, i) => i + 1)
-
-  function startEdit(day: number) {
-    const r = byDay.get(day)
-    setEditingDay(day)
-    setDraft({
-      byudjet: r ? String(r.byudjet) : "",
-      sifatli: r ? String(r.sifatli) : "",
-      jami_lead: r ? String(r.jami_lead) : "",
-      sotuv: r ? String(r.sotuv) : "",
+  // Build a synced MarketingDaily-like row for each period
+  const syncedRows = useMemo(() => {
+    return periods.map((p) => {
+      const emp = empByPeriod.get(p.key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0 }
+      const row: MarketingDaily = {
+        id: `sync-${p.key}`,
+        month: granularity === "day" ? month : p.key,
+        day: granularity === "day" ? Number(p.key) : 0,
+        byudjet: byudjetByPeriod.get(p.key) ?? 0,
+        sifatli: emp.sifatli,
+        jami_lead: emp.gaplashgan,
+        sotuv: emp.sotilgan_mijoz,
+      }
+      return { period: p, row }
     })
+  }, [periods, empByPeriod, byudjetByPeriod, granularity, month])
+
+  const totals = useMemo(
+    () => marketingTotals(syncedRows.map((s) => s.row), plan),
+    [syncedRows, plan],
+  )
+
+  function startEdit(key: string) {
+    setEditingKey(key)
+    setDraftByudjet(String(byudjetByPeriod.get(key) ?? ""))
   }
 
-  function cancelEdit() {
-    setEditingDay(null)
-  }
-
-  function save(day: number) {
+  function save(day: number, key: string) {
     startTransition(async () => {
       const res = await upsertMarketingDay({
         month,
         day,
-        byudjet: Number(draft.byudjet) || 0,
-        sifatli: Number(draft.sifatli) || 0,
-        jami_lead: Number(draft.jami_lead) || 0,
-        sotuv: Number(draft.sotuv) || 0,
+        byudjet: Number(draftByudjet) || 0,
       })
       if (res.error) {
         toast.error(res.error)
         return
       }
-      toast.success(`${day}-kun saqlandi`)
-      setEditingDay(null)
+      toast.success(`${key}-kun byudjeti saqlandi`)
+      setEditingKey(null)
     })
   }
+
+  const COLS = 12 + (canEdit ? 1 : 0)
 
   return (
     <div className="flex flex-col gap-5">
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Jami Byudjet" value={fmtSom(totals.jamiByudjet)} icon={DollarSign} tone="primary" />
+        <KpiCard label="Jami Byudjet" value={fmtMoney(totals.jamiByudjet, currency, usdRate)} icon={DollarSign} tone="primary" />
         <KpiCard label="Sifatli Lead" value={fmt(totals.jamiSifatli)} icon={BadgeCheck} tone="success" />
         <KpiCard label="Jami Lead" value={fmt(totals.jamiLead)} icon={Users} tone="default" />
         <KpiCard label="Jami Sotuv" value={fmt(totals.jamiSotuv)} icon={ShoppingCart} tone="success" />
-        <KpiCard label="O'rtacha Lead Narxi" value={fmtSom(totals.ortLeadNarxi)} icon={TrendingDown} tone="default" />
-        <KpiCard label="O'rtacha Sotuv Narxi" value={fmtSom(totals.ortSotuvNarxi)} icon={Receipt} tone="default" />
+        <KpiCard label="O'rtacha Lead Narxi" value={fmtMoney(totals.ortLeadNarxi, currency, usdRate)} icon={TrendingDown} tone="default" />
+        <KpiCard label="O'rtacha Sotuv Narxi" value={fmtMoney(totals.ortSotuvNarxi, currency, usdRate)} icon={Receipt} tone="default" />
         <KpiCard label="Reja Bajarilishi %" value={`${fmt(totals.rejaBajarilishi)}%`} icon={Target} tone="warning" />
         <KpiCard label="Reja Lid" value={fmt(totals.rejaLid)} icon={ListChecks} tone="primary" />
       </div>
+
+      <Card className="border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+        Sifatli, Jami Lead va Sotuv ustunlari sotuvchilar kiritgan ma&apos;lumotlardan avtomatik yig&apos;iladi.
+        {canEdit ? " Faqat byudjetni siz kiritasiz." : ""}
+      </Card>
 
       {!plan && canEdit ? (
         <Card className="border-warning/40 bg-warning/10 p-3 text-sm text-warning-foreground">
@@ -133,8 +169,8 @@ export function MarketingTable({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="sticky left-0 z-10 bg-muted/50">Kun</TableHead>
-                <TableHead className="text-right">Byudjet ($)</TableHead>
+                <TableHead className="sticky left-0 z-10 bg-muted/50">{periodHeader}</TableHead>
+                <TableHead className="text-right">Byudjet</TableHead>
                 <TableHead className="text-right">Sifatli</TableHead>
                 <TableHead className="text-right">Sifatsiz</TableHead>
                 <TableHead className="text-right">Jami Lead</TableHead>
@@ -149,91 +185,41 @@ export function MarketingTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {days.map((day) => {
-                const r = byDay.get(day)
-                const base: MarketingDaily = r ?? {
-                  id: `empty-${day}`,
-                  month,
-                  day,
-                  byudjet: 0,
-                  sifatli: 0,
-                  jami_lead: 0,
-                  sotuv: 0,
-                }
-                const d = marketingRow(base, plan, monthDays)
-                const isEditing = editingDay === day
+              {syncedRows.map(({ period, row }) => {
+                const d = marketingRow(row, plan, monthDays)
+                const isEditing = editingKey === period.key
+                const hasData = row.byudjet > 0 || row.jami_lead > 0
 
                 if (isEditing) {
                   return (
-                    <TableRow key={day} className="bg-accent/40">
+                    <TableRow key={period.key} className="bg-accent/40">
                       <TableCell className="sticky left-0 z-10 bg-accent/40 font-medium">
-                        {day}
+                        {period.label}
                       </TableCell>
                       <TableCell>
                         <Input
                           type="number"
                           inputMode="decimal"
-                          value={draft.byudjet}
-                          onChange={(e) => setDraft({ ...draft, byudjet: e.target.value })}
+                          value={draftByudjet}
+                          onChange={(e) => setDraftByudjet(e.target.value)}
                           className="h-8 w-24 text-right"
-                          aria-label="Byudjet"
+                          aria-label="Byudjet (so'm)"
+                          autoFocus
                         />
                       </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={draft.sifatli}
-                          onChange={(e) => setDraft({ ...draft, sifatli: e.target.value })}
-                          className="h-8 w-20 text-right"
-                          aria-label="Sifatli"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {fmt((Number(draft.jami_lead) || 0) - (Number(draft.sifatli) || 0))}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={draft.jami_lead}
-                          onChange={(e) => setDraft({ ...draft, jami_lead: e.target.value })}
-                          className="h-8 w-20 text-right"
-                          aria-label="Jami Lead"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={draft.sotuv}
-                          onChange={(e) => setDraft({ ...draft, sotuv: e.target.value })}
-                          className="h-8 w-20 text-right"
-                          aria-label="Sotuv"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground" colSpan={4}>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sifatli)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(d.sifatsiz)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.jami_lead)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sotuv)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground" colSpan={6}>
                         Avto-hisob
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {fmt(d.rejaLid)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => save(day)}
-                            disabled={pending}
-                            aria-label="Saqlash"
-                          >
+                          <Button size="icon" className="h-8 w-8" onClick={() => save(row.day, period.key)} disabled={pending} aria-label="Saqlash">
                             <Check className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={cancelEdit}
-                            disabled={pending}
-                            aria-label="Bekor qilish"
-                          >
+                          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEditingKey(null)} disabled={pending} aria-label="Bekor qilish">
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -243,34 +229,22 @@ export function MarketingTable({
                 }
 
                 return (
-                  <TableRow key={day} className={r ? "" : "text-muted-foreground"}>
-                    <TableCell className="sticky left-0 z-10 bg-card font-medium">{day}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(Number(base.byudjet))}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(base.sifatli)}</TableCell>
+                  <TableRow key={period.key} className={hasData ? "" : "text-muted-foreground"}>
+                    <TableCell className="sticky left-0 z-10 bg-card font-medium">{period.label}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtCur(row.byudjet, currency, usdRate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmt(row.sifatli)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(d.sifatsiz)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(base.jami_lead)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(base.sotuv)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(d.leadNarxi)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(d.sotuvNarxi)}</TableCell>
-                    <TableCell className="text-right">
-                      <PctBadge value={d.sifatPct} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <PctBadge value={d.konversiyaPct} />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(d.rejaLid)}</TableCell>
-                    <TableCell className="text-right">
-                      <PctBadge value={d.rejaPct} />
-                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{fmt(row.jami_lead)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmt(row.sotuv)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtCur(d.leadNarxi, currency, usdRate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtCur(d.sotuvNarxi, currency, usdRate)}</TableCell>
+                    <TableCell className="text-right"><PctBadge value={d.sifatPct} /></TableCell>
+                    <TableCell className="text-right"><PctBadge value={d.konversiyaPct} /></TableCell>
+                    <TableCell className="text-right tabular-nums">{plan ? fmt(d.rejaLid) : "—"}</TableCell>
+                    <TableCell className="text-right">{plan ? <PctBadge value={d.rejaPct} /> : "—"}</TableCell>
                     {canEdit ? (
                       <TableCell className="text-right">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => startEdit(day)}
-                          aria-label={`${day}-kunni tahrirlash`}
-                        >
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(period.key)} aria-label={`${period.label} byudjetini tahrirlash`}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -282,28 +256,24 @@ export function MarketingTable({
               {/* Totals row */}
               <TableRow className="border-t-2 bg-muted/40 font-semibold">
                 <TableCell className="sticky left-0 z-10 bg-muted/40">Jami</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiByudjet)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmtCur(totals.jamiByudjet, currency, usdRate)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {fmt(totals.jamiLead - totals.jamiSifatli)}
-                </TableCell>
+                <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead - totals.jamiSifatli)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.ortLeadNarxi)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.ortSotuvNarxi)}</TableCell>
-                <TableCell className="text-right tabular-nums" colSpan={2}>
-                  —
-                </TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.rejaLid)}</TableCell>
-                <TableCell className="text-right">
-                  <PctBadge value={totals.rejaBajarilishi} />
-                </TableCell>
+                <TableCell className="text-right tabular-nums">{fmtCur(totals.ortLeadNarxi, currency, usdRate)}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmtCur(totals.ortSotuvNarxi, currency, usdRate)}</TableCell>
+                <TableCell className="text-right tabular-nums" colSpan={2}>—</TableCell>
+                <TableCell className="text-right tabular-nums">{plan ? fmt(totals.rejaLid) : "—"}</TableCell>
+                <TableCell className="text-right">{plan ? <PctBadge value={totals.rejaBajarilishi} /> : "—"}</TableCell>
                 {canEdit ? <TableCell /> : null}
               </TableRow>
             </TableBody>
           </Table>
         </div>
       </Card>
+
+      <p className="sr-only">{COLS} ustun</p>
     </div>
   )
 }
