@@ -22,6 +22,8 @@ export function marketingRow(m: MarketingDaily, plan: PlanSettings | null, month
 export function marketingTotals(
   rows: MarketingDaily[],
   plan: PlanSettings | null,
+  // Total revenue (tushum, USD) for the period — aggregated from employee data.
+  jamiTushum = 0,
 ) {
   const jamiByudjet = rows.reduce((s, r) => s + Number(r.byudjet), 0)
   const jamiSifatli = rows.reduce((s, r) => s + r.sifatli, 0)
@@ -30,27 +32,29 @@ export function marketingTotals(
   const ortLeadNarxi = jamiLead ? jamiByudjet / jamiLead : 0
   const ortSotuvNarxi = jamiSotuv ? jamiByudjet / jamiSotuv : 0
 
-  // Plan completion = actual / planned target for the month (guarded against 0 target)
+  // Plan completion = actual / planned target for the month (guarded against 0 target).
   const rejaBajarilishi = plan && plan.plan_lead ? (jamiLead / plan.plan_lead) * 100 : 0
   const rejaByudjetPct = plan && plan.plan_byudjet ? (jamiByudjet / plan.plan_byudjet) * 100 : 0
-  const rejaSotuvPct = plan && plan.plan_sotuv ? (jamiSotuv / plan.plan_sotuv) * 100 : 0
+  // The sales plan (plan_sotuv) is a REVENUE target in USD, compared to Jami Tushum.
+  const rejaTushumPct = plan && plan.plan_sotuv ? (jamiTushum / plan.plan_sotuv) * 100 : 0
   const rejaLid = plan ? plan.plan_lead : 0
   const rejaByudjet = plan ? plan.plan_byudjet : 0
-  const rejaSotuv = plan ? plan.plan_sotuv : 0
+  const rejaTushum = plan ? plan.plan_sotuv : 0
 
   return {
     jamiByudjet,
     jamiSifatli,
     jamiLead,
     jamiSotuv,
+    jamiTushum,
     ortLeadNarxi,
     ortSotuvNarxi,
     rejaBajarilishi,
     rejaByudjetPct,
-    rejaSotuvPct,
+    rejaTushumPct,
     rejaLid,
     rejaByudjet,
-    rejaSotuv,
+    rejaTushum,
   }
 }
 

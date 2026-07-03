@@ -81,13 +81,14 @@ export function MarketingTable({
 
   // Employee sums grouped by period key (this is the sync source)
   const empByPeriod = useMemo(() => {
-    const m = new Map<string, { gaplashgan: number; sifatli: number; sotilgan_mijoz: number }>()
+    const m = new Map<string, { gaplashgan: number; sifatli: number; sotilgan_mijoz: number; tushum: number }>()
     for (const d of employeeDaily) {
       const key = granularity === "day" ? String(d.day) : d.month
-      const cur = m.get(key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0 }
+      const cur = m.get(key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0, tushum: 0 }
       cur.gaplashgan += d.gaplashgan
       cur.sifatli += d.sifatli
       cur.sotilgan_mijoz += d.sotilgan_mijoz
+      cur.tushum += Number(d.tushum)
       m.set(key, cur)
     }
     return m
@@ -96,7 +97,7 @@ export function MarketingTable({
   // Build a synced MarketingDaily-like row for each period
   const syncedRows = useMemo(() => {
     return periods.map((p) => {
-      const emp = empByPeriod.get(p.key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0 }
+      const emp = empByPeriod.get(p.key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0, tushum: 0 }
       const row: MarketingDaily = {
         id: `sync-${p.key}`,
         month: granularity === "day" ? month : p.key,
@@ -110,9 +111,15 @@ export function MarketingTable({
     })
   }, [periods, empByPeriod, byudjetByPeriod, granularity, month])
 
+  // Total revenue (tushum) for the visible periods — drives the revenue plan %.
+  const jamiTushum = useMemo(
+    () => periods.reduce((s, p) => s + (empByPeriod.get(p.key)?.tushum ?? 0), 0),
+    [periods, empByPeriod],
+  )
+
   const totals = useMemo(
-    () => marketingTotals(syncedRows.map((s) => s.row), plan),
-    [syncedRows, plan],
+    () => marketingTotals(syncedRows.map((s) => s.row), plan, jamiTushum),
+    [syncedRows, plan, jamiTushum],
   )
 
   function startEdit(key: string) {
@@ -170,11 +177,11 @@ export function MarketingTable({
               hint={`Reja: ${fmt(totals.rejaLid)} lid`}
             />
             <KpiCard
-              label="Sotuv reja %"
-              value={`${fmtPct(totals.rejaSotuvPct)}%`}
+              label="Tushum reja %"
+              value={`${fmtPct(totals.rejaTushumPct)}%`}
               icon={Target}
               tone="warning"
-              hint={`Reja: ${fmt(totals.rejaSotuv)} sotuv`}
+              hint={`${fmtUsd(totals.jamiTushum)} / ${fmtUsd(totals.rejaTushum)}`}
             />
           </>
         ) : null}

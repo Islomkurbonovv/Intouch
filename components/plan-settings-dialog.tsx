@@ -108,16 +108,16 @@ export function PlanSettingsDialog({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plan_sotuv">Reja Sotuv (sotuvlar soni)</Label>
+            <Label htmlFor="plan_sotuv">Reja Tushum ($)</Label>
             <Input
               id="plan_sotuv"
               type="number"
               value={values.plan_sotuv}
               onChange={(e) => setValues({ ...values, plan_sotuv: e.target.value })}
-              placeholder="masalan: 50"
+              placeholder="masalan: 100000"
             />
             <p className="text-xs text-muted-foreground">
-              Sotilgan mijozlar soni bo&apos;yicha reja (pul emas). Jami Sotuv shu songa nisbatan hisoblanadi.
+              Oylik daromad (tushum) rejasi dollarda. &quot;Tushum reja %&quot; jami tushumni shu songa nisbatan hisoblaydi.
             </p>
           </div>
         </div>
