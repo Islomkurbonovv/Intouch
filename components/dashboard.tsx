@@ -1,21 +1,13 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { BarChart3, Download, LogOut, Settings } from "lucide-react"
+import { BarChart3, Download, Settings } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { logout } from "@/app/actions/auth"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { UserMenu } from "@/components/user-menu"
 import {
   daysInMonth,
   yearMonths,
@@ -116,31 +108,7 @@ export function Dashboard({
 
             <ThemeToggle />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 pl-1.5" aria-label="Foydalanuvchi menyusi">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-sm font-semibold text-primary ring-1 ring-inset ring-primary/20">
-                    {profile.name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="hidden text-sm font-medium sm:inline">{profile.name}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col">
-                    <span>{profile.name}</span>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      @{profile.login} · {roleLabel(profile.role)}
-                    </span>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="text-destructive">
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  Chiqish
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserMenu profile={profile} />
           </div>
         </div>
         {usdRate ? (

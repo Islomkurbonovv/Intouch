@@ -1,6 +1,13 @@
 "use client"
 
-import { useState, useTransition, type ReactNode } from "react"
+import {
+  cloneElement,
+  isValidElement,
+  useState,
+  useTransition,
+  type ReactElement,
+  type ReactNode,
+} from "react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -9,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,9 +59,16 @@ export function PlanSettingsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+    <>
+      {/* Controlled trigger — the base-ui asChild trigger crashes here, so we
+          just wire the passed child's onClick to open the dialog. */}
+      {isValidElement(children)
+        ? cloneElement(children as ReactElement<{ onClick?: () => void }>, {
+            onClick: () => setOpen(true),
+          })
+        : children}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
         <DialogHeader>
           <DialogTitle>Reja sozlamalari</DialogTitle>
           <DialogDescription>{monthLabel(month)} uchun oylik reja</DialogDescription>
@@ -100,7 +113,8 @@ export function PlanSettingsDialog({
             {pending ? "Saqlanmoqda..." : "Saqlash"}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
