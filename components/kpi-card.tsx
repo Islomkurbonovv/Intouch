@@ -73,7 +73,13 @@ export function KpiCard({
           <p className="truncate text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1.5 truncate text-2xl font-semibold tracking-tight tabular-nums">
+          {/* On narrow (grid-cols-2) mobile cards a long money value would be
+              clipped by truncate, so shrink the font and let it wrap instead of
+              hiding digits; full text is always reachable via title. */}
+          <p
+            className="mt-1.5 text-lg font-semibold leading-tight tracking-tight tabular-nums break-words sm:truncate sm:text-2xl"
+            title={value}
+          >
             {value}
           </p>
           {hint ? (
@@ -82,7 +88,7 @@ export function KpiCard({
         </div>
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 sm:h-10 sm:w-10",
             s.icon,
           )}
         >
