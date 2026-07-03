@@ -82,7 +82,7 @@ export function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen overflow-x-clip bg-background">
       <Toaster position="top-center" richColors />
 
       {/* Header */}
@@ -124,11 +124,14 @@ export function Dashboard({
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <TabsList>
-              <TabsTrigger value="marketing">Kunlik Ma&apos;lumotlar</TabsTrigger>
-              <TabsTrigger value="employees">Hodimlar natijalari</TabsTrigger>
-              {isManager ? <TabsTrigger value="manage">Hodimlar</TabsTrigger> : null}
-            </TabsList>
+            {/* Tabs scroll horizontally on narrow screens instead of overflowing the page */}
+            <div className="-mx-1 w-full overflow-x-auto px-1 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
+              <TabsList>
+                <TabsTrigger value="marketing">Kunlik Ma&apos;lumotlar</TabsTrigger>
+                <TabsTrigger value="employees">Hodimlar natijalari</TabsTrigger>
+                {isManager ? <TabsTrigger value="manage">Hodimlar</TabsTrigger> : null}
+              </TabsList>
+            </div>
 
             {isManager && tab === "marketing" && !isYearly ? (
               <PlanSettingsDialog month={month} plan={plan}>

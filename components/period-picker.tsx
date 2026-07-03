@@ -69,7 +69,7 @@ export function PeriodPicker({
       </Button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border border-border bg-popover p-3 shadow-lg">
+        <div className="absolute left-0 right-auto z-50 mt-2 w-[calc(100vw-2rem)] max-w-xs rounded-xl border border-border bg-popover p-3 shadow-lg sm:left-auto sm:right-0 sm:w-72 sm:max-w-none">
           {/* Mode toggle */}
           <div className="mb-3 flex rounded-lg bg-muted p-1">
             <button
