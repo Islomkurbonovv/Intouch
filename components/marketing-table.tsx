@@ -30,7 +30,7 @@ import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
 import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertMarketingDay } from "@/app/actions/data"
-import { fmt, fmtUsd, fmtUsdPlain, somToUsd, toUsd } from "@/lib/rnp"
+import { fmt, fmtPct, fmtUsd, fmtUsdPlain, somToUsd, toUsd } from "@/lib/rnp"
 import { marketingRow, marketingTotals } from "@/lib/calc"
 import type {
   MarketingDaily,
@@ -157,21 +157,21 @@ export function MarketingTable({
           <>
             <KpiCard
               label="Byudjet reja %"
-              value={`${fmt(totals.rejaByudjetPct)}%`}
+              value={`${fmtPct(totals.rejaByudjetPct)}%`}
               icon={Target}
               tone="warning"
               hint={`Reja: ${fmtUsd(totals.rejaByudjet)}`}
             />
             <KpiCard
               label="Lid reja %"
-              value={`${fmt(totals.rejaBajarilishi)}%`}
+              value={`${fmtPct(totals.rejaBajarilishi)}%`}
               icon={ListChecks}
               tone="warning"
               hint={`Reja: ${fmt(totals.rejaLid)} lid`}
             />
             <KpiCard
               label="Sotuv reja %"
-              value={`${fmt(totals.rejaSotuvPct)}%`}
+              value={`${fmtPct(totals.rejaSotuvPct)}%`}
               icon={Target}
               tone="warning"
               hint={`Reja: ${fmt(totals.rejaSotuv)} sotuv`}

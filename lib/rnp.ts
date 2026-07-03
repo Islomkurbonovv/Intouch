@@ -153,3 +153,13 @@ export function pct(part: number, whole: number) {
   if (!whole) return 0
   return (part / whole) * 100
 }
+
+// Format a percentage for display. Shows up to 2 decimals for a tiny non-zero
+// value (e.g. 0.03%) so a small-but-real completion doesn't read as a flat "0".
+export function fmtPct(n: number): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "0"
+  if (n !== 0 && Math.abs(n) < 1) {
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n)
+  }
+  return fmt(n)
+}

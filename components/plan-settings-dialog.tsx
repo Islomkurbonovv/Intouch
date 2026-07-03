@@ -98,7 +98,7 @@ export function PlanSettingsDialog({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plan_lead">Reja Lead</Label>
+            <Label htmlFor="plan_lead">Reja Lead (lidlar soni)</Label>
             <Input
               id="plan_lead"
               type="number"
@@ -108,14 +108,17 @@ export function PlanSettingsDialog({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plan_sotuv">Reja Sotuv</Label>
+            <Label htmlFor="plan_sotuv">Reja Sotuv (sotuvlar soni)</Label>
             <Input
               id="plan_sotuv"
               type="number"
               value={values.plan_sotuv}
               onChange={(e) => setValues({ ...values, plan_sotuv: e.target.value })}
-              placeholder="0"
+              placeholder="masalan: 50"
             />
+            <p className="text-xs text-muted-foreground">
+              Sotilgan mijozlar soni bo&apos;yicha reja (pul emas). Jami Sotuv shu songa nisbatan hisoblanadi.
+            </p>
           </div>
         </div>
         <DialogFooter>
