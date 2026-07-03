@@ -98,7 +98,7 @@ function NumField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="0"
-        className="text-right tabular-nums"
+        className="tabular-nums"
       />
     </div>
   )
@@ -459,7 +459,7 @@ export function EmployeeResults({
                   value={draft.tushum}
                   onChange={(e) => setDraft({ ...draft, tushum: e.target.value })}
                   placeholder="0"
-                  className="flex-1 text-right tabular-nums"
+                  className="flex-1 tabular-nums"
                 />
                 <MoneyCurrencyToggle value={tushumCurrency} onChange={setTushumCurrency} rate={usdRate} />
               </div>
