@@ -3,10 +3,14 @@
 // or 0 if unavailable (callers treat 0 as "rate unknown").
 
 export async function getUsdRate(): Promise<number> {
+  // Never let a slow/unreachable cbu.uz block page render — abort after ~3s.
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 3000)
   try {
     const res = await fetch("https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/", {
-      // Refresh at most once per hour; the CBU rate changes at most daily.
-      next: { revalidate: 3600 },
+      signal: controller.signal,
+      // The CBU rate changes at most once a day.
+      next: { revalidate: 86400 },
     })
     if (!res.ok) return 0
     const data = (await res.json()) as Array<{ Rate?: string }>
@@ -14,5 +18,7 @@ export async function getUsdRate(): Promise<number> {
     return Number.isFinite(rate) && rate > 0 ? rate : 0
   } catch {
     return 0
+  } finally {
+    clearTimeout(timeout)
   }
 }

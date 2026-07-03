@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useState, useTransition } from "react"
+import { Fragment, useMemo, useOptimistic, useState, useTransition } from "react"
 import {
   ChevronRight,
   ChevronDown,
@@ -132,15 +132,35 @@ export function EmployeeResults({
   const [tushumCurrency, setTushumCurrency] = useState<InputCurrency>("USD")
   const [pending, startTransition] = useTransition()
 
+  // Optimistic copy of the daily rows (seeded from props, re-synced on each
+  // render). An edit is applied here instantly, then reconciled by revalidate.
+  const [optimisticDaily, applyOptimisticDaily] = useOptimistic(
+    employeeDaily,
+    (current: EmployeeDaily[], edited: EmployeeDaily) => {
+      const i = current.findIndex(
+        (r) =>
+          r.employee_id === edited.employee_id &&
+          r.month === edited.month &&
+          r.day === edited.day,
+      )
+      if (i >= 0) {
+        const next = current.slice()
+        next[i] = edited
+        return next
+      }
+      return [...current, edited]
+    },
+  )
+
   const dailyByEmployee = useMemo(() => {
     const m = new Map<string, EmployeeDaily[]>()
-    for (const d of employeeDaily) {
+    for (const d of optimisticDaily) {
       const arr = m.get(d.employee_id) ?? []
       arr.push(d)
       m.set(d.employee_id, arr)
     }
     return m
-  }, [employeeDaily])
+  }, [optimisticDaily])
 
   const aggByEmployee = useMemo(() => {
     const m = new Map<string, EmployeeAgg>()
@@ -202,19 +222,34 @@ export function EmployeeResults({
   function saveDay() {
     if (!editTarget) return
     const { empId, periodKey } = editTarget
+    const day = Number(periodKey)
     // Revenue is stored in USD; a so'm amount is converted at the CBU rate.
     const tushumUsd = toUsd(Number(draft.tushum) || 0, tushumCurrency, usdRate)
+    const optimisticRow: EmployeeDaily = {
+      id: `optimistic-${empId}-${month}-${day}`,
+      employee_id: empId,
+      month,
+      day,
+      gaplashgan: Number(draft.gaplashgan) || 0,
+      sifatli: Number(draft.sifatli) || 0,
+      aniqlanmagan: Number(draft.aniqlanmagan) || 0,
+      sotilgan_mijoz: Number(draft.sotilgan_mijoz) || 0,
+      sotilgan_mahsulot: Number(draft.sotilgan_mahsulot) || 0,
+      tushum: tushumUsd,
+    }
     startTransition(async () => {
+      // Show the new value immediately; reverts automatically if the save fails.
+      applyOptimisticDaily(optimisticRow)
       const res = await upsertEmployeeDay({
         employee_id: empId,
         month,
-        day: Number(periodKey),
-        gaplashgan: Number(draft.gaplashgan) || 0,
-        sifatli: Number(draft.sifatli) || 0,
-        aniqlanmagan: Number(draft.aniqlanmagan) || 0,
-        sotilgan_mijoz: Number(draft.sotilgan_mijoz) || 0,
-        sotilgan_mahsulot: Number(draft.sotilgan_mahsulot) || 0,
-        tushum: tushumUsd,
+        day,
+        gaplashgan: optimisticRow.gaplashgan,
+        sifatli: optimisticRow.sifatli,
+        aniqlanmagan: optimisticRow.aniqlanmagan,
+        sotilgan_mijoz: optimisticRow.sotilgan_mijoz,
+        sotilgan_mahsulot: optimisticRow.sotilgan_mahsulot,
+        tushum: optimisticRow.tushum,
       })
       if (res.error) {
         toast.error(res.error)

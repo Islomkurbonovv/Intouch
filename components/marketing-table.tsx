@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useMemo, useOptimistic, useState, useTransition } from "react"
 import {
   DollarSign,
   BadgeCheck,
@@ -67,17 +67,32 @@ export function MarketingTable({
   const [draftCurrency, setDraftCurrency] = useState<InputCurrency>("USD")
   const [pending, startTransition] = useTransition()
 
+  // Optimistic copy of the marketing (budget) rows — a saved budget shows
+  // instantly, then reconciles via revalidate. Keyed by (month, day).
+  const [optimisticMarketing, applyOptimisticMarketing] = useOptimistic(
+    marketing,
+    (current: MarketingDaily[], edited: MarketingDaily) => {
+      const i = current.findIndex((r) => r.month === edited.month && r.day === edited.day)
+      if (i >= 0) {
+        const next = current.slice()
+        next[i] = edited
+        return next
+      }
+      return [...current, edited]
+    },
+  )
+
   const monthDays = granularity === "day" ? periods.length : 1
 
   // Budget grouped by period key (day number or 'YYYY-MM')
   const byudjetByPeriod = useMemo(() => {
     const m = new Map<string, number>()
-    for (const r of marketing) {
+    for (const r of optimisticMarketing) {
       const key = granularity === "day" ? String(r.day) : r.month
       m.set(key, (m.get(key) ?? 0) + Number(r.byudjet))
     }
     return m
-  }, [marketing, granularity])
+  }, [optimisticMarketing, granularity])
 
   // Employee sums grouped by period key (this is the sync source)
   const empByPeriod = useMemo(() => {
@@ -133,7 +148,14 @@ export function MarketingTable({
   function save(day: number, key: string) {
     // Budget is stored in USD; a so'm amount is converted at the CBU rate.
     const byudjetUsd = toUsd(Number(draftByudjet) || 0, draftCurrency, usdRate)
+    // Only byudjet is displayed from marketing rows; the other columns are
+    // synced from employee data, so preserve/zero them.
+    const existing = optimisticMarketing.find((r) => r.month === month && r.day === day)
+    const optimisticRow: MarketingDaily = existing
+      ? { ...existing, byudjet: byudjetUsd }
+      : { id: `optimistic-${month}-${day}`, month, day, byudjet: byudjetUsd, sifatli: 0, jami_lead: 0, sotuv: 0 }
     startTransition(async () => {
+      applyOptimisticMarketing(optimisticRow)
       const res = await upsertMarketingDay({
         month,
         day,
