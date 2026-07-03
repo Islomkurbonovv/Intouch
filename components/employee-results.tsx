@@ -279,13 +279,13 @@ export function EmployeeResults({
 
                 return (
                   <Fragment key={emp.id}>
-                    <TableRow className={isOpen ? "bg-accent/30" : ""}>
+                    <TableRow className={isOpen ? "bg-accent hover:bg-accent" : "bg-card hover:bg-muted"}>
                       <TableCell className="w-8">
                         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleExpand(emp.id)} aria-label={isOpen ? "Yopish" : "Ochish"}>
                           {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                         </Button>
                       </TableCell>
-                      <TableCell className="sticky left-0 z-10 bg-card font-medium">
+                      <TableCell className="sticky left-0 z-10 bg-inherit font-medium">
                         <span className="flex items-center gap-2">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground">
                             {emp.name.charAt(0).toUpperCase()}
@@ -375,9 +375,9 @@ export function EmployeeResults({
 
               {/* Totals row */}
               {visibleEmployees.length > 0 ? (
-                <TableRow className="border-t-2 bg-muted/40 font-semibold">
+                <TableRow className="border-t-2 bg-muted font-semibold hover:bg-muted">
                   <TableCell className="w-8" />
-                  <TableCell className="sticky left-0 z-10 bg-muted/40">Umumiy jami</TableCell>
+                  <TableCell className="sticky left-0 z-10 bg-inherit">Umumiy jami</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.gaplashgan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sifatli)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>

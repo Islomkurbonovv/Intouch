@@ -229,8 +229,8 @@ export function MarketingTable({
 
                 if (isEditing) {
                   return (
-                    <TableRow key={period.key} className="bg-accent/40">
-                      <TableCell className="sticky left-0 z-10 bg-accent/40 font-medium">
+                    <TableRow key={period.key} className="bg-accent hover:bg-accent">
+                      <TableCell className="sticky left-0 z-10 bg-inherit font-medium">
                         {period.label}
                       </TableCell>
                       <TableCell>
@@ -276,8 +276,8 @@ export function MarketingTable({
                 }
 
                 return (
-                  <TableRow key={period.key} className={hasData ? "" : "text-muted-foreground"}>
-                    <TableCell className="sticky left-0 z-10 bg-card font-medium">{period.label}</TableCell>
+                  <TableRow key={period.key} className={`bg-card hover:bg-muted ${hasData ? "" : "text-muted-foreground"}`}>
+                    <TableCell className="sticky left-0 z-10 bg-inherit font-medium">{period.label}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtUsdPlain(row.byudjet)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(row.sifatli)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmt(d.sifatsiz)}</TableCell>
@@ -301,8 +301,8 @@ export function MarketingTable({
               })}
 
               {/* Totals row */}
-              <TableRow className="border-t-2 bg-muted/40 font-semibold">
-                <TableCell className="sticky left-0 z-10 bg-muted/40">Jami</TableCell>
+              <TableRow className="border-t-2 bg-muted font-semibold hover:bg-muted">
+                <TableCell className="sticky left-0 z-10 bg-inherit">Jami</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.jamiByudjet)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(Math.max(0, totals.jamiLead - totals.jamiSifatli))}</TableCell>
