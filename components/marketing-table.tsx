@@ -118,7 +118,9 @@ export function MarketingTable({
   function startEdit(key: string) {
     setEditingKey(key)
     setDraftCurrency("USD")
-    setDraftByudjet(String(byudjetByPeriod.get(key) ?? ""))
+    // Round to 2 decimals so a converted USD value shows cleanly (e.g. 176.24, not 176.2362).
+    const b = byudjetByPeriod.get(key) ?? 0
+    setDraftByudjet(b ? String(Math.round(b * 100) / 100) : "")
   }
 
   function save(day: number, key: string) {

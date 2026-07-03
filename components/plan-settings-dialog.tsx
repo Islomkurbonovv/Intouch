@@ -3,6 +3,7 @@
 import {
   cloneElement,
   isValidElement,
+  useEffect,
   useState,
   useTransition,
   type ReactElement,
@@ -40,6 +41,18 @@ export function PlanSettingsDialog({
     plan_lead: plan ? String(plan.plan_lead) : "",
     plan_sotuv: plan ? String(plan.plan_sotuv) : "",
   })
+
+  // Re-sync the form to the selected month's plan every time the dialog opens.
+  // Without this, a soft month switch keeps the previous month's values and
+  // would save them onto the new month.
+  useEffect(() => {
+    if (!open) return
+    setValues({
+      plan_byudjet: plan ? String(plan.plan_byudjet) : "",
+      plan_lead: plan ? String(plan.plan_lead) : "",
+      plan_sotuv: plan ? String(plan.plan_sotuv) : "",
+    })
+  }, [open, plan])
 
   function submit() {
     startTransition(async () => {

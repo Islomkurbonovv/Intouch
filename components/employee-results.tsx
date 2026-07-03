@@ -9,8 +9,6 @@ import {
   DollarSign,
   Percent,
   Pencil,
-  Check,
-  X,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -24,6 +22,15 @@ import {
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
 import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
@@ -56,7 +63,46 @@ const EMPTY_DRAFT: DayDraft = {
   tushum: "",
 }
 
+// Which day/employee is open in the edit dialog.
+type EditTarget = { empId: string; empName: string; periodKey: string; periodLabel: string }
+
 const COLS = 11
+
+// Round to 2 decimals so a converted USD value (e.g. 6717.2362) shows as 6717.24.
+function round2(n: number) {
+  return Math.round(n * 100) / 100
+}
+
+// A count field (non-negative integer) inside the edit dialog grid.
+function NumField({
+  id,
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (v: string) => void
+  className?: string
+}) {
+  return (
+    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="0"
+        className="text-right tabular-nums"
+      />
+    </div>
+  )
+}
 
 export function EmployeeResults({
   month,
@@ -81,7 +127,7 @@ export function EmployeeResults({
 }) {
   const isManager = isManagerRole(profile.role)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [editKey, setEditKey] = useState<string | null>(null)
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
   const [draft, setDraft] = useState<DayDraft>(EMPTY_DRAFT)
   const [tushumCurrency, setTushumCurrency] = useState<InputCurrency>("USD")
   const [pending, startTransition] = useTransition()
@@ -135,13 +181,12 @@ export function EmployeeResults({
   }
 
   function toggleExpand(empId: string) {
-    setEditKey(null)
     setExpandedId((cur) => (cur === empId ? null : empId))
   }
 
-  function startEdit(empId: string, periodKey: string) {
-    const agg = periodAgg(empId, periodKey)
-    setEditKey(periodKey)
+  // Open the edit dialog for one employee/day, prefilled with existing values.
+  function openEdit(target: EditTarget) {
+    const agg = periodAgg(target.empId, target.periodKey)
     setTushumCurrency("USD")
     setDraft({
       gaplashgan: agg.gaplashgan ? String(agg.gaplashgan) : "",
@@ -149,11 +194,14 @@ export function EmployeeResults({
       aniqlanmagan: agg.aniqlanmagan ? String(agg.aniqlanmagan) : "",
       sotilgan_mijoz: agg.sotilgan_mijoz ? String(agg.sotilgan_mijoz) : "",
       sotilgan_mahsulot: agg.sotilgan_mahsulot ? String(agg.sotilgan_mahsulot) : "",
-      tushum: agg.tushum ? String(agg.tushum) : "",
+      tushum: agg.tushum ? String(round2(agg.tushum)) : "",
     })
+    setEditTarget(target)
   }
 
-  function saveDay(empId: string, periodKey: string) {
+  function saveDay() {
+    if (!editTarget) return
+    const { empId, periodKey } = editTarget
     // Revenue is stored in USD; a so'm amount is converted at the CBU rate.
     const tushumUsd = toUsd(Number(draft.tushum) || 0, tushumCurrency, usdRate)
     startTransition(async () => {
@@ -173,9 +221,11 @@ export function EmployeeResults({
         return
       }
       toast.success(`${periodKey}-kun saqlandi`)
-      setEditKey(null)
+      setEditTarget(null)
     })
   }
+
+  const tushumUsdPreview = somToUsd(Number(draft.tushum) || 0, usdRate)
 
   return (
     <div className="flex flex-col gap-5">
@@ -278,38 +328,7 @@ export function EmployeeResults({
                                 <TableBody>
                                   {periods.map((period) => {
                                     const pAgg = periodAgg(emp.id, period.key)
-                                    const isEditing = editable && editKey === period.key
                                     const has = pAgg.gaplashgan > 0 || pAgg.tushum > 0 || pAgg.sotilgan_mijoz > 0
-
-                                    if (isEditing) {
-                                      return (
-                                        <TableRow key={period.key} className="bg-accent/40">
-                                          <TableCell className="font-medium">{period.label}</TableCell>
-                                          <TableCell><Input type="number" value={draft.gaplashgan} onChange={(e) => setDraft({ ...draft, gaplashgan: e.target.value })} className="h-8 w-20 text-right" aria-label="Gaplashgan" /></TableCell>
-                                          <TableCell><Input type="number" value={draft.sifatli} onChange={(e) => setDraft({ ...draft, sifatli: e.target.value })} className="h-8 w-20 text-right" aria-label="Sifatli" /></TableCell>
-                                          <TableCell><Input type="number" value={draft.aniqlanmagan} onChange={(e) => setDraft({ ...draft, aniqlanmagan: e.target.value })} className="h-8 w-20 text-right" aria-label="Aniqlanmagan" /></TableCell>
-                                          <TableCell><Input type="number" value={draft.sotilgan_mijoz} onChange={(e) => setDraft({ ...draft, sotilgan_mijoz: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mijoz" /></TableCell>
-                                          <TableCell><Input type="number" value={draft.sotilgan_mahsulot} onChange={(e) => setDraft({ ...draft, sotilgan_mahsulot: e.target.value })} className="h-8 w-20 text-right" aria-label="Sotilgan mahsulot" /></TableCell>
-                                          <TableCell>
-                                            <div className="flex flex-col items-end gap-1">
-                                              <div className="flex items-center gap-1">
-                                                <Input type="number" inputMode="decimal" value={draft.tushum} onChange={(e) => setDraft({ ...draft, tushum: e.target.value })} className="h-8 w-24 text-right" aria-label={tushumCurrency === "UZS" ? "Tushum (so'm)" : "Tushum ($)"} />
-                                                <MoneyCurrencyToggle value={tushumCurrency} onChange={setTushumCurrency} rate={usdRate} />
-                                              </div>
-                                              {tushumCurrency === "UZS" && usdRate ? (
-                                                <span className="text-[10px] tabular-nums text-muted-foreground">≈ ${fmtUsdPlain(somToUsd(Number(draft.tushum) || 0, usdRate))}</span>
-                                              ) : null}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell className="text-right">
-                                            <div className="flex justify-end gap-1">
-                                              <Button size="icon" className="h-8 w-8" onClick={() => saveDay(emp.id, period.key)} disabled={pending} aria-label="Saqlash"><Check className="h-4 w-4" /></Button>
-                                              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEditKey(null)} disabled={pending} aria-label="Bekor qilish"><X className="h-4 w-4" /></Button>
-                                            </div>
-                                          </TableCell>
-                                        </TableRow>
-                                      )
-                                    }
 
                                     return (
                                       <TableRow key={period.key} className={has ? "" : "text-muted-foreground"}>
@@ -322,7 +341,20 @@ export function EmployeeResults({
                                         <TableCell className="text-right tabular-nums">{fmtUsdPlain(pAgg.tushum)}</TableCell>
                                         {editable ? (
                                           <TableCell className="text-right">
-                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(emp.id, period.key)} aria-label={`${period.label} tahrirlash`}>
+                                            <Button
+                                              size="icon"
+                                              variant="ghost"
+                                              className="h-8 w-8"
+                                              onClick={() =>
+                                                openEdit({
+                                                  empId: emp.id,
+                                                  empName: emp.name,
+                                                  periodKey: period.key,
+                                                  periodLabel: period.label,
+                                                })
+                                              }
+                                              aria-label={`${period.label}-kun natijasini tahrirlash`}
+                                            >
                                               <Pencil className="h-4 w-4" />
                                             </Button>
                                           </TableCell>
@@ -361,6 +393,63 @@ export function EmployeeResults({
           </Table>
         </div>
       </Card>
+
+      {/* Edit dialog — clean form instead of cramped inline inputs */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) setEditTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Natijani kiritish</DialogTitle>
+            <DialogDescription>
+              {editTarget
+                ? `${editTarget.empName} — ${editTarget.periodLabel}-${periodHeader.toLowerCase()}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 py-2">
+            <NumField id="ed-gaplashgan" label="Gaplashgan" value={draft.gaplashgan} onChange={(v) => setDraft({ ...draft, gaplashgan: v })} />
+            <NumField id="ed-sifatli" label="Sifatli" value={draft.sifatli} onChange={(v) => setDraft({ ...draft, sifatli: v })} />
+            <NumField id="ed-aniqlanmagan" label="Aniqlanmagan" value={draft.aniqlanmagan} onChange={(v) => setDraft({ ...draft, aniqlanmagan: v })} />
+            <NumField id="ed-sotilgan-mijoz" label="Sotilgan mijoz" value={draft.sotilgan_mijoz} onChange={(v) => setDraft({ ...draft, sotilgan_mijoz: v })} />
+            <NumField id="ed-sotilgan-mahsulot" label="Sotilgan mahsulot" value={draft.sotilgan_mahsulot} onChange={(v) => setDraft({ ...draft, sotilgan_mahsulot: v })} className="col-span-2" />
+
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label htmlFor="ed-tushum">Tushum</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="ed-tushum"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={draft.tushum}
+                  onChange={(e) => setDraft({ ...draft, tushum: e.target.value })}
+                  placeholder="0"
+                  className="flex-1 text-right tabular-nums"
+                />
+                <MoneyCurrencyToggle value={tushumCurrency} onChange={setTushumCurrency} rate={usdRate} />
+              </div>
+              {tushumCurrency === "UZS" && usdRate ? (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  Dollarda: ${fmtUsdPlain(tushumUsdPreview)}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  Dollarda kiritilyapti. So&apos;mni tanlasangiz avtomatik dollarga aylanadi.
+                </span>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={pending}>
+              Bekor qilish
+            </Button>
+            <Button onClick={saveDay} disabled={pending}>
+              {pending ? "Saqlanmoqda..." : "Saqlash"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
