@@ -106,3 +106,10 @@ export function pctTone(value: number): "low" | "mid" | "high" {
   if (value < 60) return "mid"
   return "high"
 }
+
+// KpiCard tone from a "higher is better" percentage — same red/amber/green scale
+// as the table badges, so a KPI card reacts to its value.
+export function pctKpiTone(value: number): "danger" | "warning" | "success" {
+  const t = pctTone(value)
+  return t === "low" ? "danger" : t === "mid" ? "warning" : "success"
+}

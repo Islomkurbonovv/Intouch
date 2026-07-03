@@ -31,7 +31,7 @@ import { PctBadge } from "@/components/pct-badge"
 import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertMarketingDay } from "@/app/actions/data"
 import { fmt, fmtPct, fmtUsd, fmtUsdPlain, somToUsd, toUsd } from "@/lib/rnp"
-import { marketingRow, marketingTotals } from "@/lib/calc"
+import { marketingRow, marketingTotals, pctKpiTone } from "@/lib/calc"
 import type {
   MarketingDaily,
   PlanSettings,
@@ -166,21 +166,21 @@ export function MarketingTable({
               label="Byudjet reja %"
               value={`${fmtPct(totals.rejaByudjetPct)}%`}
               icon={Target}
-              tone="warning"
+              tone={pctKpiTone(totals.rejaByudjetPct)}
               hint={`Reja: ${fmtUsd(totals.rejaByudjet)}`}
             />
             <KpiCard
               label="Lid reja %"
               value={`${fmtPct(totals.rejaBajarilishi)}%`}
               icon={ListChecks}
-              tone="warning"
+              tone={pctKpiTone(totals.rejaBajarilishi)}
               hint={`Reja: ${fmt(totals.rejaLid)} lid`}
             />
             <KpiCard
               label="Tushum reja %"
               value={`${fmtPct(totals.rejaTushumPct)}%`}
               icon={Target}
-              tone="warning"
+              tone={pctKpiTone(totals.rejaTushumPct)}
               hint={`${fmtUsd(totals.jamiTushum)} / ${fmtUsd(totals.rejaTushum)}`}
             />
           </>

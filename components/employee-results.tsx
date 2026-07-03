@@ -36,7 +36,7 @@ import { PctBadge } from "@/components/pct-badge"
 import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertEmployeeDay } from "@/app/actions/data"
 import { fmt, fmtUsd, fmtUsdPlain, somToUsd, toUsd, isManagerRole } from "@/lib/rnp"
-import { aggregateEmployee, employeeDerived, emptyAgg, type EmployeeAgg } from "@/lib/calc"
+import { aggregateEmployee, employeeDerived, emptyAgg, pctKpiTone, type EmployeeAgg } from "@/lib/calc"
 import type {
   Profile,
   EmployeeDaily,
@@ -234,7 +234,7 @@ export function EmployeeResults({
         <KpiCard label="Jami gaplashgan lid" value={fmt(totals.gaplashgan)} icon={Users} tone="default" />
         <KpiCard label="Jami sotilgan mijoz" value={fmt(totals.sotilgan_mijoz)} icon={ShoppingCart} tone="success" />
         <KpiCard label="Jami tushum" value={fmtUsd(totals.tushum)} icon={DollarSign} tone="primary" />
-        <KpiCard label="O'rtacha konversiya %" value={`${fmt(totalsDerived.konversiyaPct)}%`} icon={Percent} tone="warning" />
+        <KpiCard label="O'rtacha konversiya %" value={`${fmt(totalsDerived.konversiyaPct)}%`} icon={Percent} tone={pctKpiTone(totalsDerived.konversiyaPct)} />
       </div>
 
       {!isManager ? (

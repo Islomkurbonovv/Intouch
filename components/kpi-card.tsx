@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type Tone = "default" | "primary" | "success" | "warning"
+type Tone = "default" | "primary" | "success" | "warning" | "danger"
 
 const toneStyles: Record<
   Tone,
@@ -26,6 +26,11 @@ const toneStyles: Record<
     icon: "bg-warning/15 text-warning ring-1 ring-inset ring-warning/25",
     glow: "from-warning/[0.08]",
     accent: "bg-warning",
+  },
+  danger: {
+    icon: "bg-destructive/12 text-destructive ring-1 ring-inset ring-destructive/20",
+    glow: "from-destructive/[0.07]",
+    accent: "bg-destructive",
   },
 }
 
