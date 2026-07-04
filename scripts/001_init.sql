@@ -42,6 +42,7 @@ create table if not exists public.employee_daily (
   day int not null check (day between 1 and 31),
   gaplashgan int not null default 0,
   sifatli int not null default 0,
+  sifatsiz int not null default 0,
   aniqlanmagan int not null default 0,
   sotilgan_mijoz int not null default 0,
   sotilgan_mahsulot int not null default 0,

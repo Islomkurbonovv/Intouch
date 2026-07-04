@@ -48,6 +48,7 @@ import type {
 type DayDraft = {
   gaplashgan: string
   sifatli: string
+  sifatsiz: string
   aniqlanmagan: string
   sotilgan_mijoz: string
   sotilgan_mahsulot: string
@@ -57,6 +58,7 @@ type DayDraft = {
 const EMPTY_DRAFT: DayDraft = {
   gaplashgan: "",
   sifatli: "",
+  sifatsiz: "",
   aniqlanmagan: "",
   sotilgan_mijoz: "",
   sotilgan_mahsulot: "",
@@ -66,7 +68,7 @@ const EMPTY_DRAFT: DayDraft = {
 // Which day/employee is open in the edit dialog.
 type EditTarget = { empId: string; empName: string; periodKey: string; periodLabel: string }
 
-const COLS = 11
+const COLS = 12
 
 // Round to 2 decimals so a converted USD value (e.g. 6717.2362) shows as 6717.24.
 function round2(n: number) {
@@ -176,6 +178,7 @@ export function EmployeeResults({
       const a = aggByEmployee.get(emp.id) ?? emptyAgg()
       acc.gaplashgan += a.gaplashgan
       acc.sifatli += a.sifatli
+      acc.sifatsiz += a.sifatsiz
       acc.aniqlanmagan += a.aniqlanmagan
       acc.sotilgan_mijoz += a.sotilgan_mijoz
       acc.sotilgan_mahsulot += a.sotilgan_mahsulot
@@ -211,6 +214,7 @@ export function EmployeeResults({
     setDraft({
       gaplashgan: agg.gaplashgan ? String(agg.gaplashgan) : "",
       sifatli: agg.sifatli ? String(agg.sifatli) : "",
+      sifatsiz: agg.sifatsiz ? String(agg.sifatsiz) : "",
       aniqlanmagan: agg.aniqlanmagan ? String(agg.aniqlanmagan) : "",
       sotilgan_mijoz: agg.sotilgan_mijoz ? String(agg.sotilgan_mijoz) : "",
       sotilgan_mahsulot: agg.sotilgan_mahsulot ? String(agg.sotilgan_mahsulot) : "",
@@ -232,6 +236,7 @@ export function EmployeeResults({
       day,
       gaplashgan: Number(draft.gaplashgan) || 0,
       sifatli: Number(draft.sifatli) || 0,
+      sifatsiz: Number(draft.sifatsiz) || 0,
       aniqlanmagan: Number(draft.aniqlanmagan) || 0,
       sotilgan_mijoz: Number(draft.sotilgan_mijoz) || 0,
       sotilgan_mahsulot: Number(draft.sotilgan_mahsulot) || 0,
@@ -246,6 +251,7 @@ export function EmployeeResults({
         day,
         gaplashgan: optimisticRow.gaplashgan,
         sifatli: optimisticRow.sifatli,
+        sifatsiz: optimisticRow.sifatsiz,
         aniqlanmagan: optimisticRow.aniqlanmagan,
         sotilgan_mijoz: optimisticRow.sotilgan_mijoz,
         sotilgan_mahsulot: optimisticRow.sotilgan_mahsulot,
@@ -288,6 +294,7 @@ export function EmployeeResults({
                 <TableHead className="sticky left-0 z-10 bg-muted/50">Hodim</TableHead>
                 <TableHead className="text-right">Gaplashgan</TableHead>
                 <TableHead className="text-right">Sifatli</TableHead>
+                <TableHead className="text-right">Sifatsiz</TableHead>
                 <TableHead className="text-right">Aniqlanmagan</TableHead>
                 <TableHead className="text-right">Sotilgan mijoz</TableHead>
                 <TableHead className="text-right">Sotilgan mahsulot</TableHead>
@@ -330,6 +337,7 @@ export function EmployeeResults({
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.gaplashgan)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sifatli)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{fmt(agg.sifatsiz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
@@ -353,6 +361,7 @@ export function EmployeeResults({
                                     <TableHead className="w-16">{periodHeader}</TableHead>
                                     <TableHead className="text-right">Gaplashgan</TableHead>
                                     <TableHead className="text-right">Sifatli</TableHead>
+                                    <TableHead className="text-right">Sifatsiz</TableHead>
                                     <TableHead className="text-right">Aniqlanmagan</TableHead>
                                     <TableHead className="text-right">Sotilgan mijoz</TableHead>
                                     <TableHead className="text-right">Sotilgan mahsulot</TableHead>
@@ -370,6 +379,7 @@ export function EmployeeResults({
                                         <TableCell className="font-medium">{period.label}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.gaplashgan)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatli)}</TableCell>
+                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatsiz)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mijoz)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mahsulot)}</TableCell>
@@ -415,6 +425,7 @@ export function EmployeeResults({
                   <TableCell className="sticky left-0 z-10 bg-inherit">Umumiy jami</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.gaplashgan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sifatli)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmt(totals.sifatsiz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
@@ -444,9 +455,10 @@ export function EmployeeResults({
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 py-2">
             <NumField id="ed-gaplashgan" label="Gaplashgan" value={draft.gaplashgan} onChange={(v) => setDraft({ ...draft, gaplashgan: v })} />
             <NumField id="ed-sifatli" label="Sifatli" value={draft.sifatli} onChange={(v) => setDraft({ ...draft, sifatli: v })} />
+            <NumField id="ed-sifatsiz" label="Sifatsiz" value={draft.sifatsiz} onChange={(v) => setDraft({ ...draft, sifatsiz: v })} />
             <NumField id="ed-aniqlanmagan" label="Aniqlanmagan" value={draft.aniqlanmagan} onChange={(v) => setDraft({ ...draft, aniqlanmagan: v })} />
             <NumField id="ed-sotilgan-mijoz" label="Sotilgan mijoz" value={draft.sotilgan_mijoz} onChange={(v) => setDraft({ ...draft, sotilgan_mijoz: v })} />
-            <NumField id="ed-sotilgan-mahsulot" label="Sotilgan mahsulot" value={draft.sotilgan_mahsulot} onChange={(v) => setDraft({ ...draft, sotilgan_mahsulot: v })} className="col-span-2" />
+            <NumField id="ed-sotilgan-mahsulot" label="Sotilgan mahsulot" value={draft.sotilgan_mahsulot} onChange={(v) => setDraft({ ...draft, sotilgan_mahsulot: v })} />
 
             <div className="col-span-2 flex flex-col gap-1.5">
               <Label htmlFor="ed-tushum">Tushum</Label>

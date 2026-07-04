@@ -96,12 +96,13 @@ export function MarketingTable({
 
   // Employee sums grouped by period key (this is the sync source)
   const empByPeriod = useMemo(() => {
-    const m = new Map<string, { gaplashgan: number; sifatli: number; sotilgan_mijoz: number; tushum: number }>()
+    const m = new Map<string, { gaplashgan: number; sifatli: number; sifatsiz: number; sotilgan_mijoz: number; tushum: number }>()
     for (const d of employeeDaily) {
       const key = granularity === "day" ? String(d.day) : d.month
-      const cur = m.get(key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0, tushum: 0 }
+      const cur = m.get(key) ?? { gaplashgan: 0, sifatli: 0, sifatsiz: 0, sotilgan_mijoz: 0, tushum: 0 }
       cur.gaplashgan += d.gaplashgan
       cur.sifatli += d.sifatli
+      cur.sifatsiz += d.sifatsiz
       cur.sotilgan_mijoz += d.sotilgan_mijoz
       cur.tushum += Number(d.tushum)
       m.set(key, cur)
@@ -112,13 +113,14 @@ export function MarketingTable({
   // Build a synced MarketingDaily-like row for each period
   const syncedRows = useMemo(() => {
     return periods.map((p) => {
-      const emp = empByPeriod.get(p.key) ?? { gaplashgan: 0, sifatli: 0, sotilgan_mijoz: 0, tushum: 0 }
+      const emp = empByPeriod.get(p.key) ?? { gaplashgan: 0, sifatli: 0, sifatsiz: 0, sotilgan_mijoz: 0, tushum: 0 }
       const row: MarketingDaily = {
         id: `sync-${p.key}`,
         month: granularity === "day" ? month : p.key,
         day: granularity === "day" ? Number(p.key) : 0,
         byudjet: byudjetByPeriod.get(p.key) ?? 0,
         sifatli: emp.sifatli,
+        sifatsiz: emp.sifatsiz,
         jami_lead: emp.gaplashgan,
         sotuv: emp.sotilgan_mijoz,
       }
@@ -153,7 +155,7 @@ export function MarketingTable({
     const existing = optimisticMarketing.find((r) => r.month === month && r.day === day)
     const optimisticRow: MarketingDaily = existing
       ? { ...existing, byudjet: byudjetUsd }
-      : { id: `optimistic-${month}-${day}`, month, day, byudjet: byudjetUsd, sifatli: 0, jami_lead: 0, sotuv: 0 }
+      : { id: `optimistic-${month}-${day}`, month, day, byudjet: byudjetUsd, sifatli: 0, sifatsiz: 0, jami_lead: 0, sotuv: 0 }
     startTransition(async () => {
       applyOptimisticMarketing(optimisticRow)
       const res = await upsertMarketingDay({
@@ -327,7 +329,7 @@ export function MarketingTable({
                 <TableCell className="sticky left-0 z-10 bg-inherit">Jami</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.jamiByudjet)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(Math.max(0, totals.jamiLead - totals.jamiSifatli))}</TableCell>
+                <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatsiz)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortLeadNarxi)}</TableCell>

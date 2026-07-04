@@ -218,6 +218,7 @@ export async function upsertEmployeeDay(input: {
   day: number
   gaplashgan: number
   sifatli: number
+  sifatsiz: number
   aniqlanmagan: number
   sotilgan_mijoz: number
   sotilgan_mahsulot: number
@@ -236,6 +237,7 @@ export async function upsertEmployeeDay(input: {
   const nums = [
     input.gaplashgan,
     input.sifatli,
+    input.sifatsiz,
     input.aniqlanmagan,
     input.sotilgan_mijoz,
     input.sotilgan_mahsulot,
@@ -256,6 +258,7 @@ export async function upsertEmployeeDay(input: {
       day: input.day,
       gaplashgan: input.gaplashgan,
       sifatli: input.sifatli,
+      sifatsiz: input.sifatsiz,
       aniqlanmagan: input.aniqlanmagan,
       sotilgan_mijoz: input.sotilgan_mijoz,
       sotilgan_mahsulot: input.sotilgan_mahsulot,

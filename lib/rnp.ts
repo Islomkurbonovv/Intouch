@@ -27,6 +27,7 @@ export type MarketingDaily = {
   day: number
   byudjet: number
   sifatli: number
+  sifatsiz: number
   jami_lead: number
   sotuv: number
 }
@@ -45,6 +46,7 @@ export type EmployeeDaily = {
   day: number
   gaplashgan: number
   sifatli: number
+  sifatsiz: number
   aniqlanmagan: number
   sotilgan_mijoz: number
   sotilgan_mahsulot: number

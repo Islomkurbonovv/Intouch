@@ -3,9 +3,8 @@ import type { MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
 // ---- Table 1: marketing daily derived values ----
 
 export function marketingRow(m: MarketingDaily, plan: PlanSettings | null, monthDays: number) {
-  // Guard against inverted data entry (sifatli > jami_lead) so the derived
-  // "unqualified" count can never render negative.
-  const sifatsiz = Math.max(0, m.jami_lead - m.sifatli)
+  // Sifatsiz (unqualified) is now entered by salespeople and synced here.
+  const sifatsiz = Math.max(0, m.sifatsiz)
   const leadNarxi = m.jami_lead ? m.byudjet / m.jami_lead : 0
   const sotuvNarxi = m.sotuv ? m.byudjet / m.sotuv : 0
   const sifatPct = m.jami_lead ? (m.sifatli / m.jami_lead) * 100 : 0
@@ -27,6 +26,7 @@ export function marketingTotals(
 ) {
   const jamiByudjet = rows.reduce((s, r) => s + Number(r.byudjet), 0)
   const jamiSifatli = rows.reduce((s, r) => s + r.sifatli, 0)
+  const jamiSifatsiz = rows.reduce((s, r) => s + r.sifatsiz, 0)
   const jamiLead = rows.reduce((s, r) => s + r.jami_lead, 0)
   const jamiSotuv = rows.reduce((s, r) => s + r.sotuv, 0)
   const ortLeadNarxi = jamiLead ? jamiByudjet / jamiLead : 0
@@ -44,6 +44,7 @@ export function marketingTotals(
   return {
     jamiByudjet,
     jamiSifatli,
+    jamiSifatsiz,
     jamiLead,
     jamiSotuv,
     jamiTushum,
@@ -63,6 +64,7 @@ export function marketingTotals(
 export type EmployeeAgg = {
   gaplashgan: number
   sifatli: number
+  sifatsiz: number
   aniqlanmagan: number
   sotilgan_mijoz: number
   sotilgan_mahsulot: number
@@ -73,6 +75,7 @@ export function emptyAgg(): EmployeeAgg {
   return {
     gaplashgan: 0,
     sifatli: 0,
+    sifatsiz: 0,
     aniqlanmagan: 0,
     sotilgan_mijoz: 0,
     sotilgan_mahsulot: 0,
@@ -85,6 +88,7 @@ export function aggregateEmployee(days: EmployeeDaily[]): EmployeeAgg {
   return days.reduce<EmployeeAgg>((acc, d) => {
     acc.gaplashgan += d.gaplashgan
     acc.sifatli += d.sifatli
+    acc.sifatsiz += d.sifatsiz
     acc.aniqlanmagan += d.aniqlanmagan
     acc.sotilgan_mijoz += d.sotilgan_mijoz
     acc.sotilgan_mahsulot += d.sotilgan_mahsulot
