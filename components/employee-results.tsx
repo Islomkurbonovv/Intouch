@@ -84,28 +84,26 @@ function planTone(pct: number): "success" | "warning" | "danger" {
   return "danger"
 }
 
-// Compact "how much of the plan is done" cell: a % label over a progress bar.
-// The bar fills to the completion ratio (capped at 100%); an unset plan shows "—".
-function PlanProgress({ done, plan }: { done: number; plan: number }) {
-  if (!plan) return <span className="text-xs text-muted-foreground">—</span>
+// "How much of the plan is done", as a colored pill — same shape as PctBadge so
+// the Bajarilishi column lines up with the other % columns. Unset plan → "—".
+function PlanBadge({ done, plan }: { done: number; plan: number }) {
+  if (!plan) return <span className="text-muted-foreground">—</span>
   const pct = (done / plan) * 100
-  const filled = Math.max(0, Math.min(100, pct))
   const tone = planTone(pct)
-  const barColor =
-    tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : "bg-destructive"
-  const textColor =
-    tone === "success"
-      ? "text-success"
-      : tone === "warning"
-        ? "text-warning-foreground dark:text-warning"
-        : "text-destructive"
+  const toneClasses: Record<typeof tone, string> = {
+    success: "bg-success/10 text-success ring-1 ring-inset ring-success/15",
+    warning: "bg-warning/15 text-warning-foreground ring-1 ring-inset ring-warning/25 dark:text-warning",
+    danger: "bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/15",
+  }
   return (
-    <div className="ml-auto flex w-24 flex-col items-end gap-1">
-      <span className={cn("text-xs font-semibold tabular-nums", textColor)}>{fmtPct(pct)}%</span>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div className={cn("h-full rounded-full", barColor)} style={{ width: `${filled}%` }} />
-      </div>
-    </div>
+    <span
+      className={cn(
+        "inline-flex min-w-14 items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+        toneClasses[tone],
+      )}
+    >
+      {fmtPct(pct)}%
+    </span>
   )
 }
 
@@ -396,7 +394,7 @@ export function EmployeeResults({
                       <TableCell className="text-right tabular-nums">
                         {plan ? fmtUsdPlain(plan) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="text-right"><PlanProgress done={agg.tushum} plan={plan} /></TableCell>
+                      <TableCell className="text-right"><PlanBadge done={agg.tushum} plan={plan} /></TableCell>
                       <TableCell className="text-right"><PctBadge value={der.sifatPct} /></TableCell>
                       <TableCell className="text-right"><PctBadge value={der.konversiyaPct} /></TableCell>
                       <TableCell className="text-right tabular-nums">{fmtUsdPlain(der.ortachaChek)}</TableCell>
@@ -485,7 +483,7 @@ export function EmployeeResults({
                   <TableCell className="text-right tabular-nums">
                     {totalsPlan ? fmtUsdPlain(totalsPlan) : <span className="text-muted-foreground">—</span>}
                   </TableCell>
-                  <TableCell className="text-right"><PlanProgress done={totals.tushum} plan={totalsPlan} /></TableCell>
+                  <TableCell className="text-right"><PlanBadge done={totals.tushum} plan={totalsPlan} /></TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
                   <TableCell className="text-right tabular-nums">{fmtUsdPlain(totalsDerived.ortachaChek)}</TableCell>
