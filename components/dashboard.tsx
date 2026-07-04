@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { BarChart3, Download, Settings } from "lucide-react"
+import { BarChart3, Download, Settings, Target } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
 import { Button } from "@/components/ui/button"
@@ -22,12 +22,14 @@ import {
   type MarketingDaily,
   type PlanSettings,
   type EmployeeDaily,
+  type EmployeePlan,
 } from "@/lib/rnp"
 import { exportWorkbook } from "@/lib/export"
 import { MarketingTable } from "@/components/marketing-table"
 import { EmployeeResults } from "@/components/employee-results"
 import { EmployeesManager } from "@/components/employees-manager"
 import { PlanSettingsDialog } from "@/components/plan-settings-dialog"
+import { EmployeePlansDialog } from "@/components/employee-plans-dialog"
 import { PeriodPicker } from "@/components/period-picker"
 
 export function Dashboard({
@@ -39,6 +41,7 @@ export function Dashboard({
   marketing,
   plan,
   employeeDaily,
+  employeePlans,
   usdRate,
 }: {
   profile: Profile
@@ -49,6 +52,7 @@ export function Dashboard({
   marketing: MarketingDaily[]
   plan: PlanSettings | null
   employeeDaily: EmployeeDaily[]
+  employeePlans: EmployeePlan[]
   usdRate: number
 }) {
   const isManager = isManagerRole(profile.role)
@@ -74,7 +78,7 @@ export function Dashboard({
 
   function handleExport() {
     try {
-      exportWorkbook({ label: periodLabel, marketing, employees: salespeople, employeeDaily })
+      exportWorkbook({ label: periodLabel, marketing, employees: salespeople, employeeDaily, employeePlans })
       toast.success("Excel fayli yuklab olindi")
     } catch {
       toast.error("Eksport qilishda xatolik")
@@ -141,6 +145,15 @@ export function Dashboard({
                 </Button>
               </PlanSettingsDialog>
             ) : null}
+
+            {isManager && tab === "employees" && !isYearly ? (
+              <EmployeePlansDialog month={month} employees={salespeople} plans={employeePlans}>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Target className="h-4 w-4" aria-hidden="true" />
+                  Hodim rejalari
+                </Button>
+              </EmployeePlansDialog>
+            ) : null}
           </div>
 
           <TabsContent value="marketing" className="mt-0">
@@ -165,6 +178,7 @@ export function Dashboard({
               periodHeader={isYearly ? "Oy" : "Kun"}
               employees={salespeople}
               employeeDaily={employeeDaily}
+              employeePlans={isYearly ? [] : employeePlans}
               profile={profile}
               canEditData={!isYearly}
               usdRate={usdRate}

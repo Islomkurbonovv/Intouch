@@ -210,6 +210,46 @@ export async function upsertPlanSettings(input: {
   return { ok: true }
 }
 
+// ---------- Employee monthly plans (managers only) ----------
+// Each salesperson gets a monthly revenue (tushum) target in USD. Saved in bulk
+// from the "Hodim rejalari" dialog — one row per employee for the given month.
+
+export async function upsertEmployeePlans(input: {
+  month: string
+  plans: { employee_id: string; plan_tushum: number }[]
+}): Promise<Result> {
+  const me = await requireManager()
+  if (!me) return { error: "Ruxsat yo'q" }
+
+  if (!isValidMonth(input.month)) return { error: "Noto'g'ri oy" }
+  if (!Array.isArray(input.plans) || input.plans.length === 0) {
+    return { error: "Reja kiritilmadi" }
+  }
+  for (const p of input.plans) {
+    if (!p.employee_id) return { error: "Noto'g'ri hodim" }
+    if (!Number.isFinite(p.plan_tushum) || p.plan_tushum < 0) {
+      return { error: "Reja manfiy bo'lishi mumkin emas" }
+    }
+  }
+
+  const now = new Date().toISOString()
+  const rows = input.plans.map((p) => ({
+    employee_id: p.employee_id,
+    month: input.month,
+    plan_tushum: p.plan_tushum,
+    updated_at: now,
+  }))
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("employee_plans")
+    .upsert(rows, { onConflict: "employee_id,month" })
+  if (error) return { error: error.message }
+
+  revalidatePath("/")
+  return { ok: true }
+}
+
 // ---------- Employee daily (own, or a manager) ----------
 
 export async function upsertEmployeeDay(input: {

@@ -35,11 +35,13 @@ import { KpiCard } from "@/components/kpi-card"
 import { PctBadge } from "@/components/pct-badge"
 import { MoneyCurrencyToggle } from "@/components/money-currency-toggle"
 import { upsertEmployeeDay } from "@/app/actions/data"
-import { fmt, fmtUsd, fmtUsdPlain, somToUsd, toUsd, isManagerRole } from "@/lib/rnp"
+import { fmt, fmtUsd, fmtUsdPlain, fmtPct, somToUsd, toUsd, isManagerRole } from "@/lib/rnp"
 import { aggregateEmployee, employeeDerived, emptyAgg, pctKpiTone, type EmployeeAgg } from "@/lib/calc"
+import { cn } from "@/lib/utils"
 import type {
   Profile,
   EmployeeDaily,
+  EmployeePlan,
   Period,
   Granularity,
   InputCurrency,
@@ -68,11 +70,43 @@ const EMPTY_DRAFT: DayDraft = {
 // Which day/employee is open in the edit dialog.
 type EditTarget = { empId: string; empName: string; periodKey: string; periodLabel: string }
 
-const COLS = 11
+const COLS = 13
 
 // Round to 2 decimals so a converted USD value (e.g. 6717.2362) shows as 6717.24.
 function round2(n: number) {
   return Math.round(n * 100) / 100
+}
+
+// Plan-completion tone: on/above target = green, halfway = amber, behind = red.
+function planTone(pct: number): "success" | "warning" | "danger" {
+  if (pct >= 100) return "success"
+  if (pct >= 50) return "warning"
+  return "danger"
+}
+
+// Compact "how much of the plan is done" cell: a % label over a progress bar.
+// The bar fills to the completion ratio (capped at 100%); an unset plan shows "—".
+function PlanProgress({ done, plan }: { done: number; plan: number }) {
+  if (!plan) return <span className="text-xs text-muted-foreground">—</span>
+  const pct = (done / plan) * 100
+  const filled = Math.max(0, Math.min(100, pct))
+  const tone = planTone(pct)
+  const barColor =
+    tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : "bg-destructive"
+  const textColor =
+    tone === "success"
+      ? "text-success"
+      : tone === "warning"
+        ? "text-warning-foreground dark:text-warning"
+        : "text-destructive"
+  return (
+    <div className="ml-auto flex w-24 flex-col items-end gap-1">
+      <span className={cn("text-xs font-semibold tabular-nums", textColor)}>{fmtPct(pct)}%</span>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className={cn("h-full rounded-full", barColor)} style={{ width: `${filled}%` }} />
+      </div>
+    </div>
+  )
 }
 
 // A count field (non-negative integer) inside the edit dialog grid.
@@ -113,6 +147,7 @@ export function EmployeeResults({
   periodHeader,
   employees,
   employeeDaily,
+  employeePlans,
   profile,
   canEditData,
   usdRate,
@@ -123,6 +158,7 @@ export function EmployeeResults({
   periodHeader: string
   employees: Profile[]
   employeeDaily: EmployeeDaily[]
+  employeePlans: EmployeePlan[]
   profile: Profile
   canEditData: boolean
   usdRate: number
@@ -188,6 +224,20 @@ export function EmployeeResults({
   }, [employees, aggByEmployee])
 
   const totalsDerived = employeeDerived(totals)
+
+  // Each employee's monthly revenue (tushum) target for this month, keyed by id.
+  const planByEmployee = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const p of employeePlans) m.set(p.employee_id, Number(p.plan_tushum) || 0)
+    return m
+  }, [employeePlans])
+
+  // Total plan = sum of every employee's target (matches the "Umumiy jami" row,
+  // which sums tushum across all employees).
+  const totalsPlan = useMemo(
+    () => employees.reduce((s, emp) => s + (planByEmployee.get(emp.id) ?? 0), 0),
+    [employees, planByEmployee],
+  )
 
   const visibleEmployees = isManager ? employees : employees.filter((e) => e.id === profile.id)
 
@@ -298,6 +348,8 @@ export function EmployeeResults({
                 <TableHead className="text-right">Sotilgan mijoz</TableHead>
                 <TableHead className="text-right">Sotilgan mahsulot</TableHead>
                 <TableHead className="text-right">Tushum</TableHead>
+                <TableHead className="text-right">Reja</TableHead>
+                <TableHead className="text-right">Bajarilishi</TableHead>
                 <TableHead className="text-right">Sifat %</TableHead>
                 <TableHead className="text-right">Konversiya %</TableHead>
                 <TableHead className="text-right">O&apos;rtacha chek</TableHead>
@@ -315,6 +367,7 @@ export function EmployeeResults({
               {visibleEmployees.map((emp) => {
                 const agg = aggByEmployee.get(emp.id) ?? emptyAgg()
                 const der = employeeDerived(agg)
+                const plan = planByEmployee.get(emp.id) ?? 0
                 const isOpen = expandedId === emp.id
                 const editable = canEdit(emp.id)
 
@@ -340,6 +393,10 @@ export function EmployeeResults({
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmtUsdPlain(agg.tushum)}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {plan ? fmtUsdPlain(plan) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="text-right"><PlanProgress done={agg.tushum} plan={plan} /></TableCell>
                       <TableCell className="text-right"><PctBadge value={der.sifatPct} /></TableCell>
                       <TableCell className="text-right"><PctBadge value={der.konversiyaPct} /></TableCell>
                       <TableCell className="text-right tabular-nums">{fmtUsdPlain(der.ortachaChek)}</TableCell>
@@ -425,6 +482,10 @@ export function EmployeeResults({
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.tushum)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {totalsPlan ? fmtUsdPlain(totalsPlan) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell className="text-right"><PlanProgress done={totals.tushum} plan={totalsPlan} /></TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
                   <TableCell className="text-right"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
                   <TableCell className="text-right tabular-nums">{fmtUsdPlain(totalsDerived.ortachaChek)}</TableCell>

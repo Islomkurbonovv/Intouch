@@ -4,7 +4,7 @@ import { getCurrentProfile } from "@/lib/auth"
 import { currentMonth, currentYear, daysInMonth } from "@/lib/rnp"
 import { getUsdRate } from "@/lib/cbu"
 import { Dashboard } from "@/components/dashboard"
-import type { Profile, MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
+import type { Profile, MarketingDaily, PlanSettings, EmployeeDaily, EmployeePlan } from "@/lib/rnp"
 
 export default async function Page({
   searchParams,
@@ -29,6 +29,7 @@ export default async function Page({
   let marketing: MarketingDaily[] = []
   let plan: PlanSettings | null = null
   let employeeDaily: EmployeeDaily[] = []
+  let employeePlans: EmployeePlan[] = []
 
   if (isYearly) {
     const yearLike = `${year}-%`
@@ -41,16 +42,19 @@ export default async function Page({
     marketing = (mk as MarketingDaily[]) ?? []
     employeeDaily = (emp as EmployeeDaily[]) ?? []
   } else {
-    const [{ data: emps }, { data: mk }, { data: pl }, { data: emp }] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: true }),
-      supabase.from("marketing_daily").select("*").eq("month", month).order("day"),
-      supabase.from("plan_settings").select("*").eq("month", month).maybeSingle(),
-      supabase.from("employee_daily").select("*").eq("month", month).order("day"),
-    ])
+    const [{ data: emps }, { data: mk }, { data: pl }, { data: emp }, { data: ep }] =
+      await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: true }),
+        supabase.from("marketing_daily").select("*").eq("month", month).order("day"),
+        supabase.from("plan_settings").select("*").eq("month", month).maybeSingle(),
+        supabase.from("employee_daily").select("*").eq("month", month).order("day"),
+        supabase.from("employee_plans").select("*").eq("month", month),
+      ])
     employees = (emps as Profile[]) ?? []
     marketing = (mk as MarketingDaily[]) ?? []
     plan = (pl as PlanSettings) ?? null
     employeeDaily = (emp as EmployeeDaily[]) ?? []
+    employeePlans = (ep as EmployeePlan[]) ?? []
   }
 
   // Drop rows whose day exceeds their month's real day-count so the marketing
@@ -73,6 +77,7 @@ export default async function Page({
       marketing={marketing}
       plan={plan}
       employeeDaily={employeeDaily}
+      employeePlans={employeePlans}
       usdRate={usdRate}
     />
   )

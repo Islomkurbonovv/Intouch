@@ -53,6 +53,14 @@ export type EmployeeDaily = {
   tushum: number
 }
 
+// Per-employee monthly revenue target (USD). Set by managers; completion is
+// shown against each salesperson's total tushum for the month.
+export type EmployeePlan = {
+  employee_id: string
+  month: string
+  plan_tushum: number
+}
+
 // A period is either a day (monthly view) or a month (yearly view).
 export type Granularity = "day" | "month"
 export type Period = { key: string; label: string }

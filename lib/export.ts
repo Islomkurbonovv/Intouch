@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx"
-import type { Profile, MarketingDaily, EmployeeDaily } from "@/lib/rnp"
+import type { Profile, MarketingDaily, EmployeeDaily, EmployeePlan } from "@/lib/rnp"
 import { monthShortLabel } from "@/lib/rnp"
 import { aggregateEmployee, employeeDerived } from "@/lib/calc"
 
@@ -14,8 +14,10 @@ export function exportWorkbook(opts: {
   marketing: MarketingDaily[]
   employees: Profile[]
   employeeDaily: EmployeeDaily[]
+  employeePlans?: EmployeePlan[]
 }) {
-  const { label, marketing, employees, employeeDaily } = opts
+  const { label, marketing, employees, employeeDaily, employeePlans = [] } = opts
+  const planById = new Map(employeePlans.map((p) => [p.employee_id, Number(p.plan_tushum) || 0]))
   const wb = XLSX.utils.book_new()
 
   // Sheet 1: marketing budget per day
@@ -38,6 +40,8 @@ export function exportWorkbook(opts: {
       "Sotilgan mijoz",
       "Sotilgan mahsulot",
       "Tushum ($)",
+      "Reja ($)",
+      "Bajarilishi %",
       "Sifat %",
       "Konversiya %",
       "O'rtacha chek ($)",
@@ -47,6 +51,8 @@ export function exportWorkbook(opts: {
     const days = employeeDaily.filter((e) => e.employee_id === emp.id)
     const agg = aggregateEmployee(days)
     const der = employeeDerived(agg)
+    const plan = planById.get(emp.id) ?? 0
+    const bajarilishi = plan ? (agg.tushum / plan) * 100 : 0
     sheet2.push([
       emp.name,
       agg.sifatli,
@@ -55,6 +61,8 @@ export function exportWorkbook(opts: {
       agg.sotilgan_mijoz,
       agg.sotilgan_mahsulot,
       round(agg.tushum),
+      round(plan),
+      round(bajarilishi),
       round(der.sifatPct),
       round(der.konversiyaPct),
       round(der.ortachaChek),
