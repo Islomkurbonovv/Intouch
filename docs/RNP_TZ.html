@@ -1,0 +1,1170 @@
+<style>
+  :root{
+    --bg:#f6f7fb; --panel:#ffffff; --ink:#151824; --muted:#5c6475;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --border:#e7e9f1; --border-strong:#d5d8e4;
+    --ok:#16a34a; --warn:#b45309; --bad:#dc2626;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1117; --panel:#161923; --ink:#e8eaf2; --muted:#9aa1b4;
+      --accent:#8b93ff; --accent-soft:#1e2130; --border:#242838; --border-strong:#2f3446; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .doc{background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 24px;
+    display:grid;grid-template-columns:248px minmax(0,1fr);gap:44px;align-items:start;}
+  /* Masthead */
+  .mast{grid-column:1/-1;padding:40px 0 20px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .mast .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;}
+  .mast h1{font-size:31px;line-height:1.15;letter-spacing:-.02em;margin:.35em 0 .15em;text-wrap:balance;font-weight:700;}
+  .mast .sub{color:var(--muted);font-size:15px;max-width:60ch;}
+  /* Sidebar nav */
+  nav.toc{position:sticky;top:20px;align-self:start;font-size:13px;
+    max-height:calc(100vh - 40px);overflow:auto;padding:4px 0 40px;}
+  nav.toc .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);padding:0 0 10px 12px;}
+  nav.toc a{display:block;text-decoration:none;color:var(--muted);
+    padding:5px 12px;border-left:2px solid var(--border);line-height:1.35;transition:color .15s,border-color .15s;}
+  nav.toc a:hover{color:var(--ink);border-left-color:var(--border-strong);}
+  nav.toc a.nav-sub{padding-left:26px;font-size:12.5px;color:#8b90a3;}
+  nav.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px;}
+  /* Content */
+  main{min-width:0;padding-bottom:120px;}
+  main h1{font-size:26px;margin:1.6em 0 .5em;letter-spacing:-.015em;}
+  main h2{font-size:22px;font-weight:700;letter-spacing:-.015em;margin:2.4em 0 .7em;padding-top:.7em;
+    border-top:1px solid var(--border);text-wrap:balance;scroll-margin-top:20px;}
+  main h2:first-of-type{border-top:0;padding-top:0;margin-top:.4em;}
+  main h3{font-size:17px;font-weight:650;margin:1.9em 0 .5em;color:var(--ink);letter-spacing:-.01em;scroll-margin-top:20px;}
+  main h4{font-size:14.5px;font-weight:650;margin:1.5em 0 .4em;color:var(--muted);
+    font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;}
+  main p{margin:.7em 0;max-width:74ch;}
+  main a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;}
+  main a:hover{border-bottom-color:currentColor;}
+  main ul,main ol{margin:.6em 0;padding-left:1.4em;max-width:74ch;}
+  main li{margin:.3em 0;}
+  main li::marker{color:var(--accent);}
+  main strong{font-weight:650;}
+  code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);color:var(--ink);
+    padding:.12em .38em;border-radius:5px;border:1px solid var(--border);}
+  pre{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;margin:1em 0;}
+  pre code{background:none;border:0;padding:0;font-size:12.5px;line-height:1.6;}
+  hr{border:0;border-top:1px solid var(--border);margin:2em 0;}
+  blockquote{margin:1.2em 0;padding:16px 20px;background:var(--panel);
+    border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;
+    color:var(--muted);font-size:13.5px;line-height:1.9;}
+  blockquote strong{color:var(--ink);}
+  /* Tables */
+  .tw{overflow-x:auto;margin:1.1em 0;border:1px solid var(--border);border-radius:10px;}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums;}
+  thead th{background:var(--accent-soft);text-align:left;font-weight:650;color:var(--ink);
+    padding:9px 14px;border-bottom:1px solid var(--border-strong);white-space:nowrap;}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:nth-child(even) td{background:color-mix(in oklab,var(--panel) 55%,var(--bg));}
+  td code{white-space:nowrap;}
+  @media (max-width:880px){
+    .wrap{grid-template-columns:1fr;gap:0;}
+    nav.toc{position:static;max-height:none;border-bottom:1px solid var(--border);
+      margin-bottom:16px;padding-bottom:16px;
+      display:flex;flex-wrap:wrap;gap:2px;}
+    nav.toc .lbl{width:100%;padding-left:0;}
+    nav.toc a{border-left:0;border:1px solid var(--border);border-radius:999px;padding:5px 12px;}
+    nav.toc a.nav-l3{display:none;}
+    .mast h1{font-size:26px;}
+  }
+</style>
+<div class="doc">
+  <div class="wrap">
+    <header class="mast">
+      <div class="kicker">Texnik Topshiriq · ТЗ</div>
+      <h1>RNP Dashboard</h1>
+      <p class="sub">Marketing va sotuv natijalari boshqaruv paneli — to'liq texnik spetsifikatsiya. Versiya 1.0 · 2026-07-05</p>
+    </header>
+    <nav class="toc">
+      <div class="lbl">Bo'limlar</div>
+      <a class="nav-l2" href="#1-umumiy-malumot-va-arxitektura">1. Umumiy ma'lumot va arxitektura</a>
+<a class="nav-l2" href="#2-maqsad-va-vazifalar">2. Maqsad va vazifalar</a>
+<a class="nav-l2" href="#3-foydalanuvchilar-rollar-va-autentifikatsiya">3. Foydalanuvchilar, rollar va autentifikatsiya</a>
+<a class="nav-l2" href="#4-funksional-talablar">4. Funksional talablar</a>
+<a class="nav-l2 nav-sub" href="#41-kunlik-malumotlar-jadvali-marketing">4.1. Kunlik Ma'lumotlar jadvali (marketing)</a>
+<a class="nav-l2 nav-sub" href="#42-hodimlar-natijalari-jadvali">4.2. Hodimlar natijalari jadvali</a>
+<a class="nav-l2 nav-sub" href="#43-hodim-rejalari">4.3. Hodim rejalari</a>
+<a class="nav-l2 nav-sub" href="#44-qoshimcha-funksiyalar">4.4. Qo'shimcha funksiyalar</a>
+<a class="nav-l2" href="#5-malumotlar-modeli-malumotlar-bazasi">5. Ma'lumotlar modeli (ma'lumotlar bazasi)</a>
+<a class="nav-l2" href="#6-biznes-mantiq-formulalar-jamlanmasi">6. Biznes-mantiq — formulalar jamlanmasi</a>
+<a class="nav-l2" href="#7-nofunksional-talablar">7. Nofunksional talablar</a>
+<a class="nav-l2" href="#8-lugat">8. Lug'at</a>
+    </nav>
+    <main>
+<blockquote><strong>Loyiha:</strong> RNP Dashboard — marketing va sotuv natijalari boshqaruv paneli<br><strong>Hujjat turi:</strong> Texnik topshiriq (Texnicheskoye zadaniye / ТЗ)<br><strong>Versiya:</strong> 1.0 · <strong>Sana:</strong> 2026-07-05<br><strong>Repozitoriy:</strong> github.com/Islomkurbonovv/Intouch · <strong>Muhit:</strong> Vercel (<code>intouch-phi.vercel.app</code>) + Supabase<br><strong>Til:</strong> interfeys to'liq o'zbek (lotin) · <strong>Valyuta:</strong> USD (baza)</blockquote>
+<hr>
+<hr>
+<h2 id="1-umumiy-malumot-va-arxitektura">1. Umumiy ma'lumot va arxitektura</h2>
+<h3 id="11-loyiha-maqsadi-va-qisqacha-tavsifi">1.1. Loyiha maqsadi va qisqacha tavsifi</h3>
+<p><strong>RNP Dashboard</strong> — marketing va sotuv natijalarini kunlik hamda oylik kesimda kuzatib borish, rejalar bilan solishtirish va Excel'ga eksport qilish uchun mo'ljallangan ichki boshqaruv paneli (dashboard). Panel <code>app/layout.tsx</code> metadata'sida <code>title: "RNP Dashboard"</code>, <code>description: "Marketing va sotuv natijalari boshqaruv paneli"</code> deb belgilangan.</p>
+<p>Tizim uchta asosiy ish yo'nalishini birlashtiradi:</p>
+<ul>
+<li><strong>Kunlik marketing ma'lumotlari</strong> (<code>Kunlik Ma'lumotlar</code> tabi) — byudjet, sifatli/sifatsiz va jami leadlar, sotuvlar.</li>
+<li><strong>Hodimlar natijalari</strong> (<code>Hodimlar natijalari</code> tabi) — har bir sotuvchining gaplashgan mijozlar, sifatli/sifatsiz/aniqlanmagan qo'ng'iroqlar, sotilgan mijoz/mahsulot va tushumi.</li>
+<li><strong>Hodimlarni boshqarish</strong> (<code>Hodimlar</code> tabi) — faqat menejerlar uchun; foydalanuvchilarni yaratish/o'chirish.</li>
+</ul>
+<p>Interfeys to'liq o'zbek (lotin) tilida. Ilova <code>&lt;html lang="uz"&gt;</code> bilan render qilinadi. Butun UI matni (tab nomlari, tugmalar, xatolik xabarlari) o'zbek tilida — masalan, <code>"Kirish"</code>, <code>"Eksport"</code>, <code>"Reja sozlamalari"</code>, <code>"Hodim rejalari"</code>, <code>"Login yoki parol noto'g'ri"</code>.</p>
+<p>Barcha pul summalari <strong>USD (dollar)</strong> bazasida saqlanadi; so'mda kiritilgan qiymatlar faqat kiritish paytida Markaziy Bank (MB) kursi bo'yicha USD'ga o'giriladi (batafsil 1.6-bo'limda).</p>
+<h3 id="12-texnologiyalar-toplami">1.2. Texnologiyalar to'plami</h3>
+<p>Versiyalar <code>package.json</code> fayldan olingan.</p>
+<div class="tw"><table>
+<thead><tr><th>Toifa</th><th>Texnologiya</th><th>Versiya</th></tr></thead>
+<tbody>
+<tr><td>Freymvork</td><td><code>next</code> (App Router)</td><td><code>16.2.6</code></td></tr>
+<tr><td>UI kutubxonasi</td><td><code>react</code>, <code>react-dom</code></td><td><code>^19</code></td></tr>
+<tr><td>Til</td><td><code>typescript</code></td><td><code>5.7.3</code></td></tr>
+<tr><td>Autentifikatsiya / ma'lumotlar bazasi</td><td><code>@supabase/ssr</code></td><td><code>^0.12.0</code></td></tr>
+<tr><td>Supabase JS SDK</td><td><code>@supabase/supabase-js</code></td><td><code>^2.110.0</code></td></tr>
+<tr><td>Stillar</td><td><code>tailwindcss</code> + <code>@tailwindcss/postcss</code></td><td><code>^4.2.0</code></td></tr>
+<tr><td>UI komponentlar bazasi</td><td><code>@base-ui/react</code>, <code>shadcn</code></td><td><code>^1.5.0</code>, <code>^4.8.0</code></td></tr>
+<tr><td>Ikonkalar</td><td><code>lucide-react</code></td><td><code>^1.16.0</code></td></tr>
+<tr><td>Mavzu (dark/light)</td><td><code>next-themes</code></td><td><code>^0.4.6</code></td></tr>
+<tr><td>Toast bildirishnomalari</td><td><code>sonner</code></td><td><code>^2.0.7</code></td></tr>
+<tr><td>Excel eksport</td><td><code>xlsx</code></td><td><code>^0.18.5</code></td></tr>
+<tr><td>Class utilitalar</td><td><code>class-variance-authority</code>, <code>clsx</code>, <code>tailwind-merge</code></td><td><code>^0.7.1</code>, <code>^2.1.1</code>, <code>^3.3.1</code></td></tr>
+<tr><td>Analitika</td><td><code>@vercel/analytics</code></td><td><code>1.6.1</code></td></tr>
+</tbody></table></div>
+<p>Paket menejeri sifatida <strong>pnpm</strong> ishlatiladi (<code>pnpm-lock.yaml</code>, <code>package.json</code>'dagi <code>pnpm.overrides</code>). Shriftlar <code>next/font/google</code> orqali yuklanadi: <strong>Geist</strong> (<code>--font-geist-sans</code>) va <strong>Geist Mono</strong> (<code>--font-geist-mono</code>).</p>
+<p><strong>Muhim sozlamalar</strong> (<code>next.config.mjs</code>):</p>
+<ul>
+<li><code>typescript.ignoreBuildErrors: true</code> — TypeScript xatolari build'ni to'xtatmaydi.</li>
+<li><code>images.unoptimized: true</code> — Next.js rasm optimizatsiyasi o'chirilgan.</li>
+</ul>
+<p><code>tsconfig.json</code>'da <code>strict: true</code>, <code>moduleResolution: "bundler"</code>, va <code>@/<em></code> alias loyiha ildiziga (<code>./</em></code>) yo'naltirilgan.</p>
+<h3 id="13-umumiy-arxitektura">1.3. Umumiy arxitektura</h3>
+<p>Ilova Next.js <strong>App Router</strong> asosida qurilgan va quyidagi arxitektura tamoyillariga tayanadi:</p>
+<ul>
+<li><strong>Server Components</strong> — asosiy sahifa (<code>app/page.tsx</code>) <code>async</code> server komponent bo'lib, ma'lumotlarni to'g'ridan-to'g'ri serverda Supabase'dan o'qiydi va faqat tayyor ma'lumotni klient komponentga (<code>Dashboard</code>) uzatadi.</li>
+<li><strong>Server Actions</strong> (<code>"use server"</code>) — mutatsiyalar va autentifikatsiya operatsiyalari server actionlar orqali bajariladi: <code>app/actions/auth.ts</code> (login, logout, seed-admin) va <code>app/actions/data.ts</code>.</li>
+<li><strong>Supabase Auth</strong> — sessiyalar cookie asosida saqlanadi (<code>@supabase/ssr</code>). Loginlar foydalanuvchi nomi (username) sifatida qabul qilinadi va ichki elektron pochtaga o'giriladi: <code>loginToEmail(login)</code> → <code>${login}@rnp.local</code> (konstanta <code>EMAIL_DOMAIN = "rnp.local"</code>, <code>lib/rnp.ts</code>).</li>
+<li><strong>RLS (Row Level Security)</strong> — ma'lumotlarga kirish Supabase tomonida RLS siyosatlari bilan boshqariladi. Server client anon key bilan ishlaydi (foydalanuvchi sessiyasi kontekstida), imtiyozli operatsiyalar esa alohida service-role client orqali (1.7-bo'lim).</li>
+</ul>
+<p><strong>Supabase clientlarining uch turi:</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Fayl</th><th>Funksiya</th><th>Vazifasi</th><th>Kalit</th></tr></thead>
+<tbody>
+<tr><td><code>lib/supabase/server.ts</code></td><td><code>createClient()</code></td><td>Server Component / Server Action'da foydalanuvchi sessiyasi bilan o'qish-yozish; cookie'larni <code>next/headers</code> orqali boshqaradi</td><td><code>ANON_KEY</code></td></tr>
+<tr><td><code>lib/supabase/client.ts</code></td><td><code>createClient()</code></td><td>Brauzer (klient komponent) uchun <code>createBrowserClient</code></td><td><code>ANON_KEY</code></td></tr>
+<tr><td><code>lib/supabase/admin.ts</code></td><td><code>createServiceClient()</code></td><td>Imtiyozli amallar (auth foydalanuvchi yaratish/o'chirish); <code>autoRefreshToken: false</code>, <code>persistSession: false</code>. Izohda ta'kidlangan: <strong>hech qachon klient komponentga import qilinmasin</strong></td><td><code>SERVICE_ROLE_KEY</code></td></tr>
+</tbody></table></div>
+<p><strong>Sessiya yangilash (middleware):</strong> <code>middleware.ts</code> har bir so'rovda <code>lib/supabase/proxy.ts</code>'dagi <code>updateSession(request)</code> funksiyasini chaqiradi. Bu funksiya:</p>
+<ol>
+<li>Supabase sessiya cookie'larini yangilaydi (<code>supabase.auth.getUser()</code>).</li>
+<li>Marshrutlarni himoya qiladi:</li>
+<li>Foydalanuvchi tizimga kirmagan va <code>/login</code>'da bo'lmasa → <code>/login</code>'ga yo'naltiradi.</li>
+<li>Foydalanuvchi tizimga kirgan va <code>/login</code>'da bo'lsa → <code>/</code> (dashboard)'ga yo'naltiradi.</li>
+</ol>
+<p>Middleware <code>matcher</code> orqali statik fayllar (<code>_next/static</code>, <code>_next/image</code>, <code>favicon.ico</code>) va rasm kengaytmalari (<code>.svg</code>, <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.gif</code>, <code>.webp</code>) bundan chiqarib tashlangan.</p>
+<p><strong>Rollar (Role)</strong> — <code>lib/rnp.ts</code>'da uch rol aniqlangan:</p>
+<div class="tw"><table>
+<thead><tr><th>Rol (<code>Role</code>)</th><th>O'zbekcha nomi (<code>roleLabel</code>)</th><th>Vakolat</th></tr></thead>
+<tbody>
+<tr><td><code>super_admin</code></td><td>Bosh admin</td><td>Menejer — barcha ma'lumotni ko'radi va boshqaradi</td></tr>
+<tr><td><code>admin</code></td><td>Admin</td><td>Menejer — barcha ma'lumotni ko'radi va boshqaradi</td></tr>
+<tr><td><code>salesperson</code></td><td>Sotuvchi</td><td>Faqat o'z natijalarini ko'radi/kiritadi</td></tr>
+</tbody></table></div>
+<p><code>isManagerRole(role)</code> funksiyasi <code>super_admin</code> yoki <code>admin</code> bo'lsa <code>true</code> qaytaradi — bu qiymat <code>Hodimlar</code> tabini, <code>Reja sozlamalari</code> va <code>Hodim rejalari</code> tugmalarini hamda tahrirlash huquqini boshqaradi.</p>
+<h3 id="14-asosiy-sahifalar-marshrutlar">1.4. Asosiy sahifalar / marshrutlar</h3>
+<div class="tw"><table>
+<thead><tr><th>Marshrut</th><th>Fayl</th><th>Turi</th><th>Tavsif</th></tr></thead>
+<tbody>
+<tr><td><code>/login</code></td><td><code>app/login/page.tsx</code></td><td>Server Component</td><td>Kirish sahifasi. Render'dan oldin <code>ensureSeedAdmin()</code> chaqiriladi (dastlabki admin yaratish). <code>LoginForm</code> (<code>components/login-form.tsx</code>) formasi orqali <code>login</code> server action ishga tushadi</td></tr>
+<tr><td><code>/</code></td><td><code>app/page.tsx</code></td><td>Server Component</td><td>Asosiy dashboard. Autentifikatsiyani tekshiradi, ma'lumotni o'qiydi va <code>Dashboard</code> komponentini render qiladi</td></tr>
+</tbody></table></div>
+<p><code>/</code> sahifasi URL query parametrlarini qabul qiladi (<code>searchParams</code>):</p>
+<ul>
+<li><code>view</code> — <code>"yearly"</code> bo'lsa yillik ko'rinish (aks holda oylik).</li>
+<li><code>year</code> — 4 xonali yil (<code>/^\d{4}$/</code>); noto'g'ri bo'lsa joriy yil (<code>currentYear()</code>).</li>
+<li><code>month</code> — <code>YYYY-MM</code> format (<code>/^\d{4}-\d{2}$/</code>); noto'g'ri bo'lsa joriy oy (<code>currentMonth()</code>).</li>
+</ul>
+<p><strong>Yuklanish holati:</strong> <code>app/loading.tsx</code> — dashboard marshruti qayta yuklanayotganda (masalan, oy/davr almashtirilganda) ko'rsatiladigan skeleton (header, ~8 ta KPI joyi va jadval joyi). Bu faqat markup — ma'lumot o'qimaydi.</p>
+<p><strong>Login sahifasi UI'si:</strong> RNP Dashboard logotipi (<code>BarChart3</code> ikonkasi), sarlavha, <code>"Boshqaruv paneliga kirish"</code> matni va <code>LoginForm</code> (Login/Parol maydonlari, <code>"Kirish"</code> tugmasi). Xatolikda <code>"Login yoki parol noto'g'ri"</code> yoki <code>"Login va parolni kiriting"</code> xabari chiqadi.</p>
+<h3 id="15-malumot-oqimi-data-flow">1.5. Ma'lumot oqimi (data flow)</h3>
+<p>Ma'lumot serverda o'qilib, tayyor holda klient komponentga uzatiladi. <code>app/page.tsx</code> oqimi:</p>
+<ol>
+<li><strong>Autentifikatsiya:</strong> <code>getCurrentProfile()</code> (<code>lib/auth.ts</code>) joriy foydalanuvchi <code>profiles</code> yozuvini o'qiydi; <code>null</code> bo'lsa <code>redirect("/login")</code>.</li>
+<li><strong>Kurs so'rovi (parallel):</strong> <code>getUsdRate()</code> promise'i ishga tushiriladi (natijasi keyin <code>await</code> qilinadi).</li>
+<li><strong>Supabase'dan o'qish</strong> (<code>createClient()</code>, <code>Promise.all</code> bilan parallel):</li>
+<li><strong>Oylik ko'rinishda</strong> quyidagi jadvallar o'qiladi:</li>
+</ol>
+<div class="tw"><table>
+<thead><tr><th>Jadval</th><th>Filtr / tartib</th></tr></thead>
+<tbody>
+<tr><td><code>profiles</code></td><td><code>order("created_at")</code> — barcha hodimlar</td></tr>
+<tr><td><code>marketing_daily</code></td><td><code>eq("month", month).order("day")</code></td></tr>
+<tr><td><code>plan_settings</code></td><td><code>eq("month", month).maybeSingle()</code></td></tr>
+<tr><td><code>employee_daily</code></td><td><code>eq("month", month).order("day")</code></td></tr>
+<tr><td><code>employee_plans</code></td><td><code>eq("month", month)</code></td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Yillik ko'rinishda</strong> faqat <code>profiles</code>, <code>marketing_daily</code> va <code>employee_daily</code> o'qiladi, <code>like("month", "${year}-%")</code> filtri bilan; <code>plan_settings</code> va <code>employee_plans</code> o'qilmaydi.</li>
+<li><strong>Kunlarni filtrlash:</strong> <code>inMonth()</code> yordamchi funksiyasi <code>marketing</code> va <code>employee_daily</code> qatorlaridan <code>day</code> qiymati o'sha oyning haqiqiy kun sonidan (<code>daysInMonth(month)</code>) oshib ketganlarini olib tashlaydi — ikkala jadval bir xil kun to'plami ustidan agregatlashishi uchun.</li>
+<li><strong>Render:</strong> barcha ma'lumot va <code>usdRate</code> <code>&lt;Dashboard&gt;</code> klient komponentiga prop sifatida uzatiladi.</li>
+</ul>
+<p><strong>Klient tomonda (<code>components/dashboard.tsx</code>):</strong></p>
+<ul>
+<li><code>isManagerRole(profile.role)</code> orqali menejer huquqlari aniqlanadi.</li>
+<li>Faqat <code>salesperson</code> rolli hodimlar (<code>salespeople</code>) va ularga tegishli <code>employee_daily</code> qatorlari (<code>salesEmployeeDaily</code>) filtrlanadi — menejerlarning shaxsiy kunlik yozuvlari marketing KPI'larini "shishirmasligi" uchun ikkala tab bir xil to'plamdan agregatlashadi.</li>
+<li>Uch tab: <code>Kunlik Ma'lumotlar</code> (<code>MarketingTable</code>), <code>Hodimlar natijalari</code> (<code>EmployeeResults</code>), va faqat menejerlar uchun <code>Hodimlar</code> (<code>EmployeesManager</code>).</li>
+<li><strong>Eksport:</strong> <code>Eksport</code> tugmasi <code>exportWorkbook()</code> (<code>lib/export.ts</code>) orqali Excel fayl yaratadi; muvaffaqiyatda <code>"Excel fayli yuklab olindi"</code>, xatolikda <code>"Eksport qilishda xatolik"</code> toast'i chiqadi.</li>
+</ul>
+<p>Ma'lumotlar bazasi asosiy jadvallari (<code>lib/rnp.ts</code> tiplaridan):</p>
+<ul>
+<li><strong><code>profiles</code></strong>: <code>id</code>, <code>name</code>, <code>login</code>, <code>role</code>, <code>created_at</code>.</li>
+<li><strong><code>marketing_daily</code></strong>: <code>id</code>, <code>month</code>, <code>day</code>, <code>byudjet</code>, <code>sifatli</code>, <code>sifatsiz</code>, <code>jami_lead</code>, <code>sotuv</code>.</li>
+<li><strong><code>plan_settings</code></strong>: <code>month</code>, <code>plan_byudjet</code>, <code>plan_lead</code>, <code>plan_sotuv</code>.</li>
+<li><strong><code>employee_daily</code></strong>: <code>id</code>, <code>employee_id</code>, <code>month</code>, <code>day</code>, <code>gaplashgan</code>, <code>sifatli</code>, <code>sifatsiz</code>, <code>aniqlanmagan</code>, <code>sotilgan_mijoz</code>, <code>sotilgan_mahsulot</code>, <code>tushum</code>.</li>
+<li><strong><code>employee_plans</code></strong>: <code>employee_id</code>, <code>month</code>, <code>plan_tushum</code>.</li>
+</ul>
+<h3 id="16-valyuta-modeli">1.6. Valyuta modeli</h3>
+<p>Butun pul modeli <code>lib/rnp.ts</code> va <code>lib/cbu.ts</code>'da joylashgan.</p>
+<p><strong>Asosiy tamoyil:</strong> barcha summalar bazada <strong>USD</strong> (baza valyutasi)da saqlanadi va ko'rsatiladi. MB (Markaziy Bank) kursi faqat so'mda kiritilgan summani kiritish paytida USD'ga o'girish uchun ishlatiladi.</p>
+<p><strong>Konvertatsiya funksiyalari:</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Funksiya</th><th>Formula / xatti-harakat</th></tr></thead>
+<tbody>
+<tr><td><code>somToUsd(som, rate)</code></td><td><strong>USD = So'm ÷ Kurs</strong> (kurs 0 bo'lsa 0 qaytaradi)</td></tr>
+<tr><td><code>toUsd(amount, from, rate)</code></td><td><code>from === "UZS"</code> bo'lsa <code>somToUsd(amount, rate)</code>, aks holda summa o'zgarishsiz (<code>USD</code>)</td></tr>
+<tr><td><code>fmtUsd(usd)</code></td><td><code>$</code> bilan formatlash: <code>"$1,234.56"</code> (KPI kartalari va jamilar uchun)</td></tr>
+<tr><td><code>fmtUsdPlain(usd)</code></td><td>Belgisi'z: <code>"1,234.56"</code> (jadval katakchalari uchun)</td></tr>
+</tbody></table></div>
+<p>Kiritish valyutasi tipi: <code>InputCurrency = "USD" | "UZS"</code> (<code>components/money-currency-toggle.tsx</code> orqali almashtiriladi).</p>
+<p><strong>MB kursini olish (<code>lib/cbu.ts</code>, <code>getUsdRate()</code>):</strong></p>
+<ul>
+<li>Manba: <code>https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/</code> (ochiq, autentifikatsiyasiz).</li>
+<li><strong>Timeout:</strong> <code>AbortController</code> orqali <strong>3 soniya</strong> (<code>setTimeout(() =&gt; controller.abort(), 3000)</code>) — sekin yoki ishlamaydigan cbu.uz sahifa render'ini bloklamasligi uchun.</li>
+<li><strong>Kesh:</strong> <code>next: { revalidate: 86400 }</code> — <strong>24 soat (86400 soniya)</strong>, chunki kurs kuniga ko'pi bilan bir marta o'zgaradi.</li>
+<li><strong>Xatolikda xulq:</strong> javob muvaffaqiyatsiz, kurs yaroqsiz yoki so'rov uzilsa <strong>0</strong> qaytaradi (chaqiruvchilar 0'ni "kurs noma'lum" deb qabul qiladi).</li>
+</ul>
+<p>Dashboard header'ida kurs mavjud bo'lsa (<code>usdRate</code> ≠ 0) quyidagi yozuv ko'rsatiladi: <code>"Barcha summalar dollarda · MB kursi 1$ = {kurs} so'm"</code> (<code>fmt(usdRate)</code> bilan ming ajratgichli formatda).</p>
+<h3 id="17-deploy-va-muhit-ozgaruvchilari-env-var">1.7. Deploy va muhit o'zgaruvchilari (env-var)</h3>
+<p><strong>Deploy:</strong> loyiha <strong>Vercel</strong> platformasida joylashtirilgan. GitHub repozitoriysi — <strong>Islomkurbonovv/Intouch</strong>, ishlab chiqarish (production) manzili — <strong>intouch-phi.vercel.app</strong>. Ishlab chiqarish rejimida (<code>process.env.NODE_ENV === "production"</code>) <code>@vercel/analytics</code> <code>&lt;Analytics /&gt;</code> komponenti faollashadi (<code>app/layout.tsx</code>).</p>
+<p><strong>Muhit o'zgaruvchilari:</strong></p>
+<div class="tw"><table>
+<thead><tr><th>O'zgaruvchi</th><th>Turi</th><th>Ishlatilishi</th></tr></thead>
+<tbody>
+<tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Public</td><td>Barcha Supabase clientlar (server, client, admin) uchun loyiha URL'i</td></tr>
+<tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Public</td><td>Server va brauzer clientlar (foydalanuvchi sessiyasi, RLS ostida)</td></tr>
+<tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Maxfiy (server)</td><td>Service-role client (<code>createServiceClient</code>) — imtiyozli amallar</td></tr>
+<tr><td><code>SEED_ADMIN_LOGIN</code></td><td>Maxfiy (server)</td><td>Dastlabki bosh admin logini</td></tr>
+<tr><td><code>SEED_ADMIN_PASSWORD</code></td><td>Maxfiy (server)</td><td>Dastlabki bosh admin paroli</td></tr>
+</tbody></table></div>
+<p><strong>Seed-admin xavfsizligi (<code>app/actions/auth.ts</code>, <code>ensureSeedAdmin()</code>):</strong></p>
+<ul>
+<li>Kredensiallar <strong>faqat</strong> server env-var'laridan olinadi, hech qachon kodda qattiq yozilmaydi.</li>
+<li><code>SEED_ADMIN_LOGIN</code> yoki <code>SEED_ADMIN_PASSWORD</code> o'rnatilmagan bo'lsa (yoki parol 8 belgidan qisqa bo'lsa) funksiya <strong>hech narsa qilmaydi</strong> (no-op) — shu tariqa ochiq marshrut hech qachon standart hisobni avtomatik yaratmaydi.</li>
+<li>Agar allaqachon biror menejer (<code>super_admin</code> yoki <code>admin</code>) mavjud bo'lsa, funksiya to'xtaydi.</li>
+<li>Aks holda service-role client orqali <code>email_confirm: true</code> bilan auth foydalanuvchi va <code>role: "super_admin"</code> rolli <code>profiles</code> yozuvi yaratiladi.</li>
+</ul>
+<p><strong>Muhim fayllar:</strong></p>
+<ul>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/app/page.tsx</code> — asosiy server data-fetch</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/dashboard.tsx</code> — asosiy klient UI</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/rnp.ts</code> — tiplar, rollar, valyuta va sana yordamchilari</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/cbu.ts</code> — MB kursi (3s timeout, 24s kesh)</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/supabase/{server,client,admin,proxy}.ts</code> — Supabase clientlar va sessiya</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/middleware.ts</code> — marshrut himoyasi</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/app/actions/auth.ts</code> — login/logout/seed-admin</li>
+</ul>
+<hr>
+<h2 id="2-maqsad-va-vazifalar">2. Maqsad va vazifalar</h2>
+<h3 id="21-maqsad">2.1. Maqsad</h3>
+<p>Marketing byudjeti, lead oqimi va sotuvchilar natijalarini <strong>bir joyda, kunlik va oylik kesimda</strong> kuzatib borish; ularni oldindan qo'yilgan <strong>rejalar</strong> bilan avtomatik solishtirish; hamda rahbariyat uchun tez, aniq va bir xil o'lchov birligidagi (USD) ko'rsatkichlarni taqdim etish.</p>
+<h3 id="22-asosiy-vazifalar">2.2. Asosiy vazifalar</h3>
+<ul>
+<li><strong>Marketing samaradorligini o'lchash</strong> — sarflangan byudjetdan qancha lead va sotuv olinganini, lead va sotuv narxini hisoblash.</li>
+<li><strong>Lead sifatini nazorat qilish</strong> — sifatli va sifatsiz leadlar nisbati (Sifat %) va sotuvga aylanish darajasi (Konversiya %).</li>
+<li><strong>Sotuvchilar samaradorligini baholash</strong> — har bir sotuvchining natijalari, o'rtacha cheki, konversiyasi.</li>
+<li><strong>Rejalashtirish va nazorat</strong> — oylik byudjet, kunlik sifatli lead va oylik tushum rejalarini belgilash; har bir sotuvchiga oylik tushum rejasini taqsimlash va uning bajarilishini kuzatish.</li>
+<li><strong>Hisobot</strong> — barcha ma'lumotlarni Excel formatida eksport qilish.</li>
+</ul>
+<h3 id="23-kolam-scope">2.3. Ko'lam (scope)</h3>
+<p>Tizim quyidagilarni qamrab oladi: foydalanuvchi/rol boshqaruvi, kunlik marketing byudjeti kiritish, sotuvchilar tomonidan kunlik natijalarni kiritish, avtomatik agregatsiya va hosila ko'rsatkichlar (formulalar), rejalarni belgilash va bajarilishni ko'rsatish, valyuta konversiyasi (so'm → USD), oylik/yillik ko'rinishlar va Excel eksport. Tizim <strong>ichki</strong> boshqaruv paneli bo'lib, ochiq ro'yxatdan o'tish (self-signup) mavjud emas — foydalanuvchilarni faqat menejer yaratadi.</p>
+<h2 id="3-foydalanuvchilar-rollar-va-autentifikatsiya">3. Foydalanuvchilar, rollar va autentifikatsiya</h2>
+<h3 id="31-umumiy-tavsif">3.1. Umumiy tavsif</h3>
+<p>Tizim autentifikatsiyasi <strong>Supabase Auth</strong> (<code>@supabase/ssr</code>) asosida qurilgan. Foydalanuvchilar tizimga <strong>login</strong> va <strong>parol</strong> orqali kiradilar; login ichki tarzda maxsus e-mail manzilga o'giriladi. Har bir foydalanuvchining roli va profil ma'lumotlari <code>profiles</code> jadvalida saqlanadi (<code>id</code>, <code>name</code>, <code>login</code>, <code>role</code>, <code>created_at</code>). Foydalanuvchi identifikatori (<code>profiles.id</code>) Supabase Auth foydalanuvchisining <code>id</code> qiymati bilan bir xil bo'ladi.</p>
+<h3 id="32-rollar">3.2. Rollar</h3>
+<p>Tizimda uch xil rol mavjud (<code>lib/rnp.ts</code> — <code>Role</code> tipi):</p>
+<div class="tw"><table>
+<thead><tr><th>Rol (kod qiymati)</th><th>Ekrandagi nomi (<code>roleLabel</code>)</th><th>Menejermi? (<code>isManagerRole</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>super_admin</code></td><td>Bosh admin</td><td>Ha</td></tr>
+<tr><td><code>admin</code></td><td>Admin</td><td>Ha</td></tr>
+<tr><td><code>salesperson</code></td><td>Sotuvchi</td><td>Yo'q</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Menejer</strong> (<code>isManagerRole</code>) — bu <code>super_admin</code> yoki <code>admin</code> roli. Menejer butun dashboardni ko'radi va ma'lumotlarni boshqaradi.</li>
+<li><strong>Sotuvchi</strong> (<code>salesperson</code>) — faqat o'z natijalarini kirita oladi.</li>
+</ul>
+<p>Roldan qat'i nazar, foydalanuvchining rol yorlig'i (badge) rang varianti bilan ko'rsatiladi (<code>employees-manager.tsx</code> — <code>badgeVariant</code>): <code>super_admin</code> → <code>default</code>, <code>admin</code> → <code>outline</code>, <code>salesperson</code> → <code>secondary</code>.</p>
+<h3 id="33-ruxsatlar-matritsasi">3.3. Ruxsatlar matritsasi</h3>
+<div class="tw"><table>
+<thead><tr><th>Amal</th><th>Bosh admin (<code>super_admin</code>)</th><th>Admin (<code>admin</code>)</th><th>Sotuvchi (<code>salesperson</code>)</th></tr></thead>
+<tbody>
+<tr><td>Butun dashboardni ko'rish</td><td>Ha</td><td>Ha</td><td>Yo'q (faqat o'z natijasi)</td></tr>
+<tr><td>Byudjet kiritish (<code>upsertMarketingDay</code>)</td><td>Ha</td><td>Ha</td><td>Yo'q</td></tr>
+<tr><td>Oylik reja kiritish (<code>upsertPlanSettings</code>)</td><td>Ha</td><td>Ha</td><td>Yo'q</td></tr>
+<tr><td>Hodim rejalarini kiritish (<code>upsertEmployeePlans</code>)</td><td>Ha</td><td>Ha</td><td>Yo'q</td></tr>
+<tr><td>Sotuvchi qo'shish/tahrirlash/o'chirish</td><td>Ha</td><td>Ha</td><td>Yo'q</td></tr>
+<tr><td>Admin/Bosh admin qo'shish</td><td>Ha</td><td>Yo'q</td><td>Yo'q</td></tr>
+<tr><td>Admin/Bosh admin tahrirlash yoki o'chirish</td><td>Ha</td><td>Yo'q</td><td>Yo'q</td></tr>
+<tr><td>O'z kunlik natijasini kiritish (<code>upsertEmployeeDay</code>)</td><td>Ha</td><td>Ha</td><td>Ha (faqat o'ziniki)</td></tr>
+<tr><td>Boshqa hodim natijasini kiritish</td><td>Ha</td><td>Ha</td><td>Yo'q</td></tr>
+</tbody></table></div>
+<p>Ruxsat tekshiruvi barcha server action'larida amalga oshiriladi (<code>app/actions/data.ts</code>):</p>
+<ul>
+<li><code>requireManager()</code> — joriy profilni oladi (<code>getCurrentProfile</code>) va <code>isManagerRole</code> tekshiradi; menejer bo'lmasa <code>{ error: "Ruxsat yo'q" }</code> qaytaradi.</li>
+<li><code>upsertEmployeeDay</code> esa menejer bo'lmasa ham, faqat <code>profile.id === input.employee_id</code> bo'lganda ruxsat beradi; aks holda <code>{ error: "Faqat o'z natijalaringizni kirita olasiz" }</code>.</li>
+</ul>
+<h3 id="34-login-mexanizmi">3.4. Login mexanizmi</h3>
+<p>Login jarayoni quyidagi bosqichlardan iborat:</p>
+<ol>
+<li><strong>Login formasi</strong> (<code>components/login-form.tsx</code>) — <code>login</code> va <code>password</code> maydonlari (ikkalasi ham <code>required</code>). Forma <code>useActionState</code> orqali <code>login</code> server action'ini chaqiradi. Yuborilayotganda tugma "Kirilmoqda..." holatiga o'tadi, aks holda "<strong>Kirish</strong>".</li>
+<li><strong>Server action <code>login</code></strong> (<code>app/actions/auth.ts</code>):</li>
+<li><code>login</code> va <code>password</code> bo'sh bo'lsa → <code>{ error: "Login va parolni kiriting" }</code>.</li>
+<li>Login <code>loginToEmail(login)</code> orqali e-mailga aylantiriladi.</li>
+<li><code>supabase.auth.signInWithPassword({ email, password })</code> chaqiriladi.</li>
+<li>Xato bo'lsa → <code>{ error: "Login yoki parol noto'g'ri" }</code>.</li>
+<li>Muvaffaqiyatda → <code>revalidatePath("/", "layout")</code> va <code>redirect("/")</code>.</li>
+<li><strong><code>loginToEmail</code></strong> (<code>lib/rnp.ts</code>): loginni kichik harflarga o'giradi, bo'shliqlarni olib tashlaydi va <code>@rnp.local</code> domenini qo'shadi:</li>
+<li>Formula: <code>loginToEmail(login) = login.trim().toLowerCase() + "@rnp.local"</code></li>
+<li>Domen konstantasi: <code>EMAIL_DOMAIN = "rnp.local"</code>.</li>
+<li>Masalan: login <code>Alisher</code> → e-mail <code>alisher@rnp.local</code>.</li>
+</ol>
+<p>Loginlar foydalanuvchi nomi (username) sifatida ishlatiladi; Supabase Auth ichida esa ular yuqoridagi ichki e-mailga bog'lanadi.</p>
+<h3 id="35-chiqish-logout">3.5. Chiqish (logout)</h3>
+<p>Chiqish menejer/foydalanuvchi menyusi orqali amalga oshiriladi (<code>components/user-menu.tsx</code>). Menyu tepasida foydalanuvchi ismi, <code>@login</code> va roli (<code>roleLabel</code>) ko'rsatiladi. "<strong>Chiqish</strong>" tugmasi <code>logout</code> server action'ini chaqiradi. <code>logout</code> (<code>app/actions/auth.ts</code>): <code>supabase.auth.signOut()</code> va <code>revalidatePath("/", "layout")</code>.</p>
+<h3 id="36-seed-admin-birinchi-bosh-adminni-yaratish">3.6. Seed-admin (birinchi bosh adminni yaratish)</h3>
+<p><code>ensureSeedAdmin</code> server action'i (<code>app/actions/auth.ts</code>) yangi o'rnatishda tizim ishga tushishi uchun birinchi bosh adminni yaratadi. Xavfsizlik qoidalari:</p>
+<ul>
+<li>Kirish ma'lumotlari <strong>faqat</strong> server tomonidagi muhit o'zgaruvchilaridan olinadi: <code>SEED_ADMIN_LOGIN</code> va <code>SEED_ADMIN_PASSWORD</code>. Kodda hech qachon hardcode qilinmaydi.</li>
+<li>Agar <code>SEED_ADMIN_LOGIN</code> yoki <code>SEED_ADMIN_PASSWORD</code> o'rnatilmagan bo'lsa yoki parol <strong>8 belgidan qisqa</strong> bo'lsa — action hech narsa qilmaydi (no-op). Shu tufayli ochiq route hech qachon avtomatik ravishda ma'lum standart hisob yaratmaydi.</li>
+<li>Agar <code>profiles</code> jadvalida allaqachon <strong>kamida bitta menejer</strong> (<code>super_admin</code> yoki <code>admin</code>) mavjud bo'lsa — hech narsa qilinmaydi.</li>
+<li>Yaratilganda: service-role client orqali Supabase Auth foydalanuvchisi tuziladi (<code>email_confirm: true</code>, <code>user_metadata: { name: "Administrator", login }</code>), so'ng <code>profiles</code> jadvaliga <code>role: "super_admin"</code>, <code>name: "Administrator"</code> bilan qator qo'shiladi.</li>
+</ul>
+<h3 id="37-middleware-himoyasi">3.7. Middleware himoyasi</h3>
+<p>Barcha marshrutlar <code>middleware.ts</code> orqali himoyalangan; u <code>updateSession</code> (<code>lib/supabase/proxy.ts</code>) funksiyasini chaqiradi. Middleware <code>matcher</code>i statik fayllar (<code>_next/static</code>, <code>_next/image</code>, <code>favicon.ico</code>) va rasm fayllari (<code>.svg</code>, <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.gif</code>, <code>.webp</code>) dan tashqari barcha yo'llarga qo'llanadi.</p>
+<p>Har bir so'rovda <code>supabase.auth.getUser()</code> orqali sessiya tekshiriladi va cookie'lar yangilanadi:</p>
+<ul>
+<li><strong>Autentifikatsiyasiz</strong> foydalanuvchi <code>/login</code> dan boshqa sahifaga kirsa → <code>/login</code> ga yo'naltiriladi.</li>
+<li><strong>Autentifikatsiyalangan</strong> foydalanuvchi <code>/login</code> ga kirsa → dashboard (<code>/</code>) ga yo'naltiriladi.</li>
+</ul>
+<h3 id="38-hodim-crud-server-actionlari-va-rol-tekshiruvlari">3.8. Hodim CRUD server action'lari va rol tekshiruvlari</h3>
+<p>Hodimlarni boshqarish interfeysi <code>components/employees-manager.tsx</code> (jadval + "<strong>Hodim qo'shish</strong>" tugmasi + tahrirlash/o'chirish dialog'lari) orqali amalga oshiriladi. Barcha yozish amallari <strong>service-role client</strong> (<code>createServiceClient</code>) orqali bajariladi, chunki Auth foydalanuvchilarini yaratish/o'chirish imtiyozli amaldir.</p>
+<h4 id="381-createemployeeformdata">3.8.1. <code>createEmployee(formData)</code></h4>
+<ul>
+<li><code>requireManager()</code> — menejer bo'lmasa <code>{ error: "Ruxsat yo'q" }</code>.</li>
+<li>Maydonlar: <code>name</code>, <code>login</code> (kichik harfga), <code>password</code>, <code>role</code> (<code>normRole</code> orqali normallashadi).</li>
+<li><strong>Faqat <code>super_admin</code></strong> boshqa menejer yaratishi mumkin: agar <code>role !== "salesperson"</code> va <code>me.role !== "super_admin"</code> → <code>{ error: "Faqat bosh admin admin qo'sha oladi" }</code>.</li>
+<li>Bo'sh maydonlar → <code>{ error: "Barcha maydonlarni to'ldiring" }</code>.</li>
+<li>Parol <strong>6 belgidan qisqa</strong> bo'lsa → <code>{ error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }</code>.</li>
+<li>Login band bo'lsa (<code>profiles</code> da mavjud) → <code>{ error: "Bu login band" }</code>.</li>
+<li>Auth foydalanuvchi yaratiladi (<code>email: loginToEmail(login)</code>, <code>email_confirm: true</code>), so'ng <code>profiles</code> ga qator qo'shiladi. Agar <code>profiles.insert</code> xato bersa — yaratilgan Auth foydalanuvchisi qaytadan o'chiriladi (<code>deleteUser</code>, ya'ni rollback).</li>
+</ul>
+<h4 id="382-updateemployeeformdata">3.8.2. <code>updateEmployee(formData)</code></h4>
+<ul>
+<li><code>requireManager()</code> — menejer bo'lmasa <code>{ error: "Ruxsat yo'q" }</code>.</li>
+<li>Nishon (target) profilning joriy qiymatlari (<code>name</code>, <code>login</code>, <code>role</code>) oldindan o'qiladi — ham ruxsatni tekshirish, ham rollback uchun.</li>
+<li><strong>Oddiy admin</strong> (<code>me.role !== "super_admin"</code>) menejerlarga tegina olmaydi va hech kimni menejerlik roliga ko'tara olmaydi: agar <code>targetRole !== "salesperson"</code> yoki yangi <code>role !== "salesperson"</code> → <code>{ error: "Faqat bosh admin adminlarni boshqara oladi" }</code>.</li>
+<li>Parol berilgan bo'lsa va <strong>6 belgidan qisqa</strong> bo'lsa → <code>{ error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }</code>. Tekshiruv hech narsa o'zgartirilmasdan <strong>oldin</strong> bajariladi.</li>
+<li>Login boshqa hodimda band bo'lsa → <code>{ error: "Bu login band" }</code>.</li>
+<li><strong>Atomik rollback mexanizmi</strong>: avval <code>profiles</code> yangilanadi (<code>name</code>, <code>login</code>, <code>role</code>), so'ng Auth yozuvi yangilanadi (<code>email</code>, ixtiyoriy <code>password</code>). Agar Auth yangilash xato bersa — <code>profiles</code> qatori eski qiymatlarga <strong>qaytariladi</strong>, aks holda <code>profiles.login</code> va Auth e-maili bir-biridan ayrilib qolib, foydalanuvchi tizimga kira olmay qolishi mumkin. Agar rollback ham xato bersa (ikkilangan xato) — log yoziladi va <code>{ error: "Yangilashda xatolik — hodim ma'lumotlarini qayta tekshiring" }</code> qaytariladi.</li>
+</ul>
+<h4 id="383-deleteemployeeid">3.8.3. <code>deleteEmployee(id)</code></h4>
+<ul>
+<li><code>requireManager()</code> — menejer bo'lmasa <code>{ error: "Ruxsat yo'q" }</code>.</li>
+<li>O'zini o'chira olmaydi: <code>id === me.id</code> → <code>{ error: "O'zingizni o'chira olmaysiz" }</code>.</li>
+<li><strong>Oddiy admin faqat sotuvchilarni o'chira oladi</strong>: agar <code>me.role !== "super_admin"</code> va <code>targetRole !== "salesperson"</code> → <code>{ error: "Faqat bosh admin adminlarni o'chira oladi" }</code>.</li>
+<li><code>auth.admin.deleteUser(id)</code> chaqiriladi — bu kaskad orqali <code>profiles</code> va <code>employee_daily</code> yozuvlarini ham o'chiradi.</li>
+</ul>
+<h4 id="384-klient-tomonidagi-cheklovlar-employees-managertsx">3.8.4. Klient tomonidagi cheklovlar (<code>employees-manager.tsx</code>)</h4>
+<ul>
+<li><code>canManage(emp)</code> — oddiy admin faqat sotuvchilarga (<code>emp.role === "salesperson"</code>) yoki o'ziga tegishli qatorlarga amal qila oladi; bosh admin (<code>isSuper</code>) barchasiga.</li>
+<li>Rol tanlash ro'yxati (<code>roleOptions</code>) faqat bosh adminda uch variant (<code>Sotuvchi</code>, <code>Admin</code>, <code>Bosh admin</code>) ko'rsatadi; oddiy adminda faqat <code>Sotuvchi</code>. Oddiy admin uchun "Faqat bosh admin admin qo'sha oladi." izohi chiqadi.</li>
+<li>Tahrirlash/o'chirish tugmalari <code>disabled</code> holatiga o'tadi, agar hodim boshqarib bo'lmasa yoki o'chirilayotgan hodim foydalanuvchining o'zi bo'lsa.</li>
+<li>O'chirish tasdiqlash oynasi hodimning barcha natijalari ham o'chishini ogohlantiradi (bu amalni ortga qaytarib bo'lmaydi).</li>
+</ul>
+<h3 id="39-supabase-clientlari-va-rls">3.9. Supabase client'lari va RLS</h3>
+<p>Tizimda ikki xil Supabase client ishlatiladi:</p>
+<div class="tw"><table>
+<thead><tr><th>Client</th><th>Fayl</th><th>Kalit</th><th>Vazifa</th></tr></thead>
+<tbody>
+<tr><td>SSR/anon client</td><td><code>lib/supabase/server.ts</code>, <code>lib/supabase/proxy.ts</code></td><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Foydalanuvchi sessiyasi bilan (cookie orqali) ishlaydi; RLS qoidalari qo'llanadi. Login, sessiya, oddiy ma'lumot o'qish/yozish uchun.</td></tr>
+<tr><td>Service-role client</td><td><code>lib/supabase/admin.ts</code> (<code>createServiceClient</code>)</td><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>RLS'ni <strong>chetlab o'tadi</strong>; Auth foydalanuvchilarini yaratish/o'chirish/yangilash kabi imtiyozli amallar uchun. <code>autoRefreshToken: false</code>, <code>persistSession: false</code>. Hech qachon klient komponentlariga import qilinmaydi.</td></tr>
+</tbody></table></div>
+<p><strong>Muhim</strong>: service-role client RLS himoyasini butunlay chetlab o'tgani uchun, hodim CRUD amallaridagi rol tekshiruvlari (<code>requireManager</code>, <code>super_admin</code> shartlari) faqat server action kodida amalga oshiriladi — bu tekshiruvlar ma'lumotlar bazasi darajasida emas, balki ilova mantig'i darajasida joriy qilinadi.</p>
+<hr>
+<p>O'qilgan fayllar: <code>/Users/m2air/Desktop/RNP/Intouch/app/actions/auth.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/lib/auth.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/lib/supabase/proxy.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/lib/supabase/server.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/lib/supabase/admin.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/app/actions/data.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/components/employees-manager.tsx</code>, <code>/Users/m2air/Desktop/RNP/Intouch/components/login-form.tsx</code>, <code>/Users/m2air/Desktop/RNP/Intouch/components/user-menu.tsx</code>, <code>/Users/m2air/Desktop/RNP/Intouch/lib/rnp.ts</code>, <code>/Users/m2air/Desktop/RNP/Intouch/middleware.ts</code>.</p>
+<hr>
+<h2 id="4-funksional-talablar">4. Funksional talablar</h2>
+<p>Ilova uchta asosiy bo'limdan (tab) iborat: <strong>Kunlik Ma'lumotlar</strong> (marketing), <strong>Hodimlar natijalari</strong> va <strong>Hodimlar</strong> (foydalanuvchilarni boshqarish — 3-bo'limga qarang). Yuqorida davr tanlash (oy/yil), Eksport, tema almashtirish va foydalanuvchi menyusi joylashgan. Barcha pul summalari dollarda (<code>$</code>), foizlar rang bilan kodlanadi (past — qizil, o'rta — sariq, yuqori — yashil), raqamlar sarlavha ostida markazga tekislanadi.</p>
+<h2 id="41-kunlik-malumotlar-jadvali-marketing">4.1. Kunlik Ma'lumotlar jadvali (marketing)</h2>
+<h3 id="411-umumiy-tavsif-va-maqsad">4.1.1. Umumiy tavsif va maqsad</h3>
+<p>Kunlik Ma'lumotlar jadvali marketing bo'limining asosiy monitoring vositasi bo'lib, tanlangan oy (yoki davr) davomida marketing byudjetining lidlar va sotuvlarga qanday aylanayotganini kunma-kun (yoki davr kesimida) ko'rsatadi. Jadval <code>components/marketing-table.tsx</code> faylidagi <code>MarketingTable</code> komponenti orqali chiziladi, hisob-kitob formulalari esa <code>lib/calc.ts</code> faylidagi <code>marketingRow</code> (qator darajasi) va <code>marketingTotals</code> (agregat "Jami" qatori va KPI'lar) funksiyalarida joylashgan.</p>
+<p>Jadvalning asosiy g'oyasi — <strong>ikki manbani birlashtirish</strong>:</p>
+<ul>
+<li><strong>Byudjet</strong> — marketing bo'limi tomonidan qo'lda kiritiladi (<code>MarketingDaily</code> yozuvlari, <code>byudjet</code> ustuni).</li>
+<li><strong>Lidlar va sotuvlar</strong> — sotuvchilar kiritgan kunlik ma'lumotlardan (<code>EmployeeDaily</code>) avtomatik yig'iladi.</li>
+</ul>
+<p>Ushbu ikki manba davr kaliti (kun raqami yoki <code>YYYY-MM</code>) bo'yicha birlashtirilib, har bir davr uchun sintez qilingan (synced) qator hosil qilinadi, so'ngra hosila ko'rsatkichlar (lid narxi, konversiya va h.k.) hisoblanadi.</p>
+<p>Jadval ustidagi izoh kartasi bu qoidani foydalanuvchiga aniq bildiradi:</p>
+<blockquote>"Sifatli, Jami Lead va Sotuv ustunlari sotuvchilar kiritgan ma'lumotlardan avtomatik yig'iladi. Faqat byudjetni siz kiritasiz — $ yoki so'mda (so'm avtomatik dollarga aylanadi). Barcha summalar dollarda ko'rsatiladi."</blockquote>
+<h3 id="412-ustunlar-tartibi-va-tavsifi">4.1.2. Ustunlar tartibi va tavsifi</h3>
+<p>Jadval sarlavhasi quyidagi tartibda 12 ta ma'lumot ustunidan iborat; tahrirlash huquqi bor foydalanuvchida qo'shimcha <strong>Amal</strong> ustuni bilan jami 13 ta ustun bo'ladi (<code>COLS = 12 + (canEdit ? 1 : 0)</code>). Birinchi ustun sarlavhasi <code>periodHeader</code> propidan olinadi (kunlik ko'rinishda "Kun", davr ko'rinishida davr nomi).</p>
+<div class="tw"><table>
+<thead><tr><th>№</th><th>Ustun nomi</th><th>Manba</th><th>Tavsif</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Kun</strong> (<code>periodHeader</code>)</td><td>Davr</td><td>Kun raqami yoki davr yorlig'i (<code>period.label</code>). Chapga yopishtirilgan (<code>sticky left-0</code>).</td></tr>
+<tr><td>2</td><td><strong>Byudjet</strong></td><td>Qo'lda</td><td>Kunlik marketing byudjeti, USD'da ko'rsatiladi (<code>fmtUsd</code>). Yagona qo'lda kiritiladigan ustun.</td></tr>
+<tr><td>3</td><td><strong>Jami Lead</strong></td><td>Avto</td><td>Jami lidlar = Sifatli + Sifatsiz (<code>jami_lead</code>).</td></tr>
+<tr><td>4</td><td><strong>Sifatli</strong></td><td>Avto</td><td>Sifatli (klassifikatsiyalangan) lidlar soni (<code>sifatli</code>).</td></tr>
+<tr><td>5</td><td><strong>Sifatsiz</strong></td><td>Avto</td><td>Sifatsiz lidlar soni (<code>sifatsiz</code>, <code>Math.max(0, m.sifatsiz)</code> orqali manfiydan himoyalangan).</td></tr>
+<tr><td>6</td><td><strong>Sotuv</strong></td><td>Avto</td><td>Sotilgan mijozlar soni (<code>sotuv</code> ← <code>sotilgan_mijoz</code>).</td></tr>
+<tr><td>7</td><td><strong>Lead Narxi</strong></td><td>Hisob</td><td>Bitta lidning tannarxi, USD (<code>leadNarxi</code>).</td></tr>
+<tr><td>8</td><td><strong>Sotuv Narxi</strong></td><td>Hisob</td><td>Bitta sotuvning tannarxi, USD (<code>sotuvNarxi</code>).</td></tr>
+<tr><td>9</td><td><strong>Sifat %</strong></td><td>Hisob</td><td>Lid sifati foizi (<code>sifatPct</code>), rangli belgi (badge).</td></tr>
+<tr><td>10</td><td><strong>Konversiya %</strong></td><td>Hisob</td><td>Sifatli lidlardan sotuvga aylanish foizi (<code>konversiyaPct</code>), rangli belgi.</td></tr>
+<tr><td>11</td><td><strong>Reja Lid</strong></td><td>Reja</td><td>Kunlik sifatli-lid rejasi (<code>rejaLid</code> ← <code>plan_lead</code>). Reja bo'lmasa "—".</td></tr>
+<tr><td>12</td><td><strong>Reja %</strong></td><td>Hisob</td><td>Kunlik reja bajarilishi (<code>rejaPct</code>), rangli belgi. Reja bo'lmasa "—".</td></tr>
+<tr><td>13</td><td><strong>Amal</strong></td><td>Amal</td><td>Faqat <code>canEdit=true</code> bo'lganda. Byudjetni tahrirlash tugmasi (qalam belgisi).</td></tr>
+</tbody></table></div>
+<h3 id="413-avtomatik-yigiladigan-ustunlar">4.1.3. Avtomatik yig'iladigan ustunlar</h3>
+<p>Quyidagi ustunlar sotuvchilar kiritgan <code>EmployeeDaily</code> yozuvlaridan davr kaliti bo'yicha yig'iladi (<code>empByPeriod</code> → <code>syncedRows</code>) va <strong>qo'lda tahrirlab bo'lmaydi</strong>:</p>
+<ul>
+<li><strong>Sifatli</strong> = sotuvchilarning <code>sifatli</code> yig'indisi.</li>
+<li><strong>Sifatsiz</strong> = sotuvchilarning <code>sifatsiz</code> yig'indisi.</li>
+<li><strong>Jami Lead</strong> = Sifatli + Sifatsiz (<code>jami_lead: emp.sifatli + emp.sifatsiz</code>). Diqqat: "gaplashgan" (jami muloqotlar) ataylab qo'shilmaydi — kod izohida <code>"gaplashgan removed"</code>.</li>
+<li><strong>Sotuv</strong> = sotuvchilarning <code>sotilgan_mijoz</code> yig'indisi.</li>
+</ul>
+<h3 id="414-qolda-kiritiladigan-ustun-byudjet">4.1.4. Qo'lda kiritiladigan ustun (Byudjet)</h3>
+<p>Faqat <strong>Byudjet</strong> ustuni qo'lda kiritiladi va faqat <code>canEdit=true</code> bo'lgan foydalanuvchiga tahrir tugmasi (<strong>Amal</strong> ustunidagi qalam belgisi) ko'rsatiladi. Tahrirlash oqimi:</p>
+<ol>
+<li>Qalam tugmasi bosilganda (<code>startEdit</code>) o'sha davr uchun byudjet inputga yuklanadi (2 kasrgacha yumaloqlanadi: <code>Math.round(b * 100) / 100</code>).</li>
+<li>Byudjet <strong>$ yoki so'mda</strong> kiritilishi mumkin — valyuta almashtirgichi <code>MoneyCurrencyToggle</code> orqali tanlanadi (<code>draftCurrency</code>: <code>"USD"</code> | <code>"UZS"</code>).</li>
+<li>So'm tanlansa, MB (CBU) kursi (<code>usdRate</code>) bo'yicha real vaqtda <code>≈ $...</code> ko'rinishida oldindan ko'rsatiladi (<code>somToUsd</code>).</li>
+<li>Saqlashda (<code>save</code>) qiymat <code>toUsd(amount, currency, rate)</code> orqali <strong>doim USD'ga o'giriladi</strong> va shu USD qiymati <code>upsertMarketingDay</code> server amali orqali saqlanadi. So'mdan USD: <code>somToUsd = som / rate</code> (kurs 0 bo'lsa 0).</li>
+<li>Saqlash <code>useOptimistic</code> (<code>applyOptimisticMarketing</code>) orqali darhol aks ettiriladi, so'ngra revalidate bilan solishtiriladi. Muvaffaqiyatda <code>"{kun}-kun byudjeti saqlandi"</code> toast chiqadi.</li>
+</ol>
+<p>Marketing yozuvidan faqat <strong>byudjet</strong> o'qiladi; qolgan ustunlar sotuvchilardan sinxronlangani uchun saqlashda ular saqlanadi yoki nolga tenglashtiriladi.</p>
+<h3 id="415-hisob-kitob-formulalari-qator-darajasi">4.1.5. Hisob-kitob formulalari (qator darajasi)</h3>
+<p>Har bir qator uchun hosila qiymatlar <code>marketingRow(m, plan)</code> funksiyasida hisoblanadi:</p>
+<div class="tw"><table>
+<thead><tr><th>Ko'rsatkich</th><th>Formula</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><strong>Lead Narxi</strong></td><td><code>Byudjet ÷ Jami Lead</code></td><td>Jami Lead = 0 bo'lsa natija 0.</td></tr>
+<tr><td><strong>Sotuv Narxi</strong></td><td><code>Byudjet ÷ Sotuv</code></td><td>Sotuv = 0 bo'lsa natija 0.</td></tr>
+<tr><td><strong>Sifat %</strong></td><td><code>Sifatli ÷ (Sifatli + Sifatsiz) × 100</code></td><td>Maxraj = 0 bo'lsa 0.</td></tr>
+<tr><td><strong>Konversiya %</strong></td><td><code>Sotuv ÷ Sifatli × 100</code></td><td>Sifatli = 0 bo'lsa 0.</td></tr>
+<tr><td><strong>Reja Lid</strong></td><td><code>plan_lead</code> (kunlik sifatli-lid rejasi)</td><td>`Number(plan?.plan_lead)</td></tr>
+<tr><td><strong>Reja %</strong></td><td><code>Sifatli ÷ Reja Lid × 100</code></td><td>Reja Lid = 0 bo'lsa 0.</td></tr>
+</tbody></table></div>
+<p><strong>Muhim texnik nuance:</strong> Supabase <code>numeric</code> ustunlarni satr (string) sifatida qaytaradi va <code>"0"</code> satri "truthy" hisoblanadi. Shu sababli <code>plan_lead</code> qiymati <code>Number(...)</code> orqali oldindan songa aylantiriladi — aks holda 0 reja bo'yicha bo'lish <code>Infinity</code> ("∞%") beradi.</p>
+<h3 id="416-jami-qatori-va-agregat-formulalari">4.1.6. "Jami" qatori va agregat formulalari</h3>
+<p>Jadval oxirida <code>marketingTotals(rows, plan, jamiTushum, monthDays)</code> orqali hisoblanadigan <strong>Jami</strong> qatori (<code>border-t-2</code>, <code>font-semibold</code>) turadi. Agregat formulalari:</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>"Jami" qatori formulasi</th></tr></thead>
+<tbody>
+<tr><td>Byudjet</td><td><code>Σ byudjet</code> (barcha qatorlar) = <code>jamiByudjet</code></td></tr>
+<tr><td>Jami Lead</td><td><code>Σ jami_lead</code> = <code>jamiLead</code></td></tr>
+<tr><td>Sifatli</td><td><code>Σ sifatli</code> = <code>jamiSifatli</code></td></tr>
+<tr><td>Sifatsiz</td><td><code>Σ sifatsiz</code> = <code>jamiSifatsiz</code></td></tr>
+<tr><td>Sotuv</td><td><code>Σ sotuv</code> = <code>jamiSotuv</code></td></tr>
+<tr><td>Lead Narxi</td><td><code>jamiByudjet ÷ jamiLead</code> (o'rtacha) = <code>ortLeadNarxi</code></td></tr>
+<tr><td>Sotuv Narxi</td><td><code>jamiByudjet ÷ jamiSotuv</code> (o'rtacha) = <code>ortSotuvNarxi</code></td></tr>
+<tr><td>Sifat %</td><td><code>jamiSifatli ÷ (jamiSifatli + jamiSifatsiz) × 100</code></td></tr>
+<tr><td>Konversiya %</td><td><code>jamiSotuv ÷ jamiSifatli × 100</code></td></tr>
+<tr><td>Reja Lid</td><td><code>plan_lead</code> (kunlik) — <code>rejaLid</code></td></tr>
+<tr><td>Reja %</td><td><code>jamiSifatli ÷ (plan_lead × oy kunlari soni) × 100</code> = <code>rejaBajarilishi</code></td></tr>
+</tbody></table></div>
+<p>Bu yerda <strong>Reja %</strong> (Jami qatori) kunlik rejadan farqli — kunlik <code>plan_lead</code> oy kunlari soniga (<code>monthDays</code>, kunlik ko'rinishda <code>periods.length</code>) ko'paytirilib <strong>oylik sifatli reja</strong> (<code>oylikSifatliReja = planLead * monthDays</code>) hosil qilinadi.</p>
+<h3 id="417-kpi-kartalar">4.1.7. KPI kartalar</h3>
+<p>Jadval ustida <code>KpiCard</code> kartalar to'plami joylashadi (grid: mobil 2 ustun, <code>lg</code> da 4 ustun). Doimiy 6 ta karta:</p>
+<div class="tw"><table>
+<thead><tr><th>Karta</th><th>Qiymat</th><th>Manba / formula</th></tr></thead>
+<tbody>
+<tr><td><strong>Jami Byudjet</strong></td><td><code>fmtUsd(jamiByudjet)</code></td><td>tone: <code>primary</code></td></tr>
+<tr><td><strong>Jami Lead</strong></td><td><code>fmt(jamiLead)</code></td><td>tone: <code>default</code></td></tr>
+<tr><td><strong>Sifatli Lead</strong></td><td><code>fmt(jamiSifatli)</code></td><td>tone: <code>success</code></td></tr>
+<tr><td><strong>Jami Sotuv</strong></td><td><code>fmt(jamiSotuv)</code></td><td>tone: <code>success</code></td></tr>
+<tr><td><strong>O'rtacha Lead Narxi</strong></td><td><code>fmtUsd(ortLeadNarxi)</code></td><td><code>jamiByudjet ÷ jamiLead</code></td></tr>
+<tr><td><strong>O'rtacha Sotuv Narxi</strong></td><td><code>fmtUsd(ortSotuvNarxi)</code></td><td><code>jamiByudjet ÷ jamiSotuv</code></td></tr>
+</tbody></table></div>
+<p>Reja sozlangan bo'lsa (<code>plan</code> mavjud), yana 3 ta karta qo'shiladi; ularning rangi <code>pctKpiTone</code> orqali qiymatga qarab o'zgaradi:</p>
+<div class="tw"><table>
+<thead><tr><th>Karta</th><th>Qiymat</th><th>Formula</th><th>Hint (izoh)</th></tr></thead>
+<tbody>
+<tr><td><strong>Byudjet reja %</strong></td><td><code>rejaByudjetPct</code></td><td><code>jamiByudjet ÷ plan_byudjet × 100</code></td><td><code>Reja: {fmtUsd(rejaByudjet)}</code></td></tr>
+<tr><td><strong>Sifatli reja %</strong></td><td><code>rejaBajarilishi</code></td><td><code>jamiSifatli ÷ (plan_lead × oy kunlari) × 100</code></td><td><code>Kunlik reja: {rejaLid} sifatli</code></td></tr>
+<tr><td><strong>Tushum reja %</strong></td><td><code>rejaTushumPct</code></td><td><code>jamiTushum ÷ plan_sotuv × 100</code></td><td><code>{fmtUsd(jamiTushum)} / {fmtUsd(rejaTushum)}</code></td></tr>
+</tbody></table></div>
+<p>Bu yerda:</p>
+<ul>
+<li><strong><code>jamiTushum</code></strong> — ko'rinadigan davrlar bo'yicha sotuvchilarning <code>tushum</code> (USD) yig'indisi.</li>
+<li><strong><code>plan_sotuv</code></strong> — sotuv rejasi emas, balki <strong>USD'dagi tushum (daromad) rejasi</strong>, shuning uchun u <code>jamiTushum</code> bilan solishtiriladi.</li>
+</ul>
+<p>Reja hali sozlanmagan va foydalanuvchi tahrir huquqiga ega bo'lsa, ogohlantiruvchi karta ko'rsatiladi: <em>"Reja hali sozlanmagan. «Reja sozlamalari» tugmasi orqali oylik rejani kiriting."</em></p>
+<h3 id="418-rang-kodlash-pastortayuqori">4.1.8. Rang kodlash (past/o'rta/yuqori)</h3>
+<p>Foizli ustunlar (Sifat %, Konversiya %, Reja %) va reja KPI kartalari uchun yagona uch bosqichli rang shkalasi ishlatiladi. Chegara qiymatlari <code>pctTone(value)</code> da belgilangan:</p>
+<div class="tw"><table>
+<thead><tr><th>Diapazon</th><th>Toifa</th><th>Rang</th><th>Ma'no</th></tr></thead>
+<tbody>
+<tr><td><code>value &lt; 30</code></td><td><code>low</code></td><td>Qizil (destructive)</td><td>Past ko'rsatkich</td></tr>
+<tr><td><code>30 ≤ value &lt; 60</code></td><td><code>mid</code></td><td>Sariq (warning)</td><td>O'rta ko'rsatkich</td></tr>
+<tr><td><code>value ≥ 60</code></td><td><code>high</code></td><td>Yashil (success)</td><td>Yuqori ko'rsatkich</td></tr>
+</tbody></table></div>
+<p>Jadval katakchalarida foizlar <code>PctBadge</code> komponenti orqali dumaloq rangli belgi (badge) ko'rinishida chiqadi. KPI kartalarida esa <code>pctKpiTone</code> <code>low→danger</code>, <code>mid→warning</code>, <code>high→success</code> tonlariga o'giradi (bir xil qizil/sariq/yashil shkala).</p>
+<h3 id="419-tekislash-va-valyuta-korsatish-qoidalari">4.1.9. Tekislash va valyuta ko'rsatish qoidalari</h3>
+<ul>
+<li>Barcha ma'lumot ustunlari <strong>markazga tekislanadi</strong> (<code>text-center</code>); birinchi ustun (Kun/davr) chapga yopishtirilgan (<code>sticky left-0</code>).</li>
+<li>Raqamli qiymatlar <code>tabular-nums</code> bilan tekis ustunda ko'rsatiladi; minglar ajratkichi <code>fmt</code> (<code>ru-RU</code> formatida) orqali.</li>
+<li><strong>Pul ustunlari</strong> (Byudjet, Lead Narxi, Sotuv Narxi va barcha KPI pul kartalari) <code>$</code> belgisi bilan ko'rsatiladi (<code>fmtUsd</code> → <code>"$1,234.56"</code>, <code>en-US</code>, maksimal 2 kasr).</li>
+<li>Barcha pul qiymatlari <strong>doim USD'da</strong> saqlanadi va ko'rsatiladi; so'm faqat kiritish paytida MB kursi bo'yicha USD'ga o'giriladi (<code>toUsd</code>/<code>somToUsd</code>).</li>
+<li>Foizlar <code>fmtPct</code> orqali formatlanadi: 0 dan farqli lekin 1% dan kichik qiymatlar 2 kasrgacha ko'rsatiladi (masalan <code>0.03%</code>), aks holda butun songa yumaloqlanadi.</li>
+<li>Ma'lumotsiz qatorlar (<code>byudjet = 0</code> va <code>jami_lead = 0</code>) xiralashtirilgan matn rangida (<code>text-muted-foreground</code>) ko'rsatiladi; reja yo'q bo'lsa Reja Lid va Reja % o'rniga "—" chiqadi.</li>
+</ul>
+<p>Tegishli fayllar:</p>
+<ul>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/marketing-table.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/calc.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/pct-badge.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/rnp.ts</code></li>
+</ul>
+<h2 id="42-hodimlar-natijalari-jadvali">4.2. Hodimlar natijalari jadvali</h2>
+<h3 id="421-umumiy-tavsif">4.2.1. Umumiy tavsif</h3>
+<p>Hodimlar natijalari jadvali sotuvchilar (hodimlar)ning oylik faoliyat ko'rsatkichlarini yig'ma ko'rinishda aks ettiradi va boshqaruvchi (menejer) yoki hodimning o'zi tomonidan kunlik natijalarni kiritish imkonini beradi. Komponent: <code>components/employee-results.tsx</code> (<code>EmployeeResults</code>).</p>
+<p>Ma'lumotlar manbalari:</p>
+<ul>
+<li><code>employee_daily</code> jadvali — hodimning har bir kundagi xom ko'rsatkichlari.</li>
+<li><code>employee_plans</code> jadvali — har bir hodimning oylik tushum rejasi (<code>plan_tushum</code>, USD).</li>
+<li><code>plan_settings</code> jadvali — oylik umumiy tushum rejasi (<code>plan_sotuv</code>, "Reja Tushum").</li>
+</ul>
+<p>Barcha pul qiymatlari USD'da saqlanadi va ko'rsatiladi. So'm faqat kiritish paytida MB (Markaziy bank) kursi bo'yicha USD'ga o'giriladi.</p>
+<h3 id="422-rol-asosida-korinish-va-ruxsat">4.2.2. Rol asosida ko'rinish va ruxsat</h3>
+<div class="tw"><table>
+<thead><tr><th>Rol</th><th>Ko'rish</th><th>Tahrirlash</th></tr></thead>
+<tbody>
+<tr><td><code>super_admin</code> / <code>admin</code> (menejer)</td><td>Barcha hodimlar</td><td>Barcha hodimlarning kunlik natijalari</td></tr>
+<tr><td><code>salesperson</code> (sotuvchi)</td><td>Faqat o'zi</td><td>Faqat o'z natijalari</td></tr>
+</tbody></table></div>
+<ul>
+<li>Menejerlik <code>isManagerRole(profile.role)</code> orqali aniqlanadi.</li>
+<li>Ko'rinadigan hodimlar ro'yxati: menejer uchun barcha <code>employees</code>, sotuvchi uchun faqat <code>profile.id</code> ga teng bo'lgan satr (<code>visibleEmployees</code>).</li>
+<li>Tahrirlash sharti (<code>canEdit</code>): <code>canEditData &amp;&amp; granularity === "day" &amp;&amp; (menejer || profile.id === empId)</code>. Ya'ni tahrirlash faqat <strong>kunlik</strong> detalizatsiya (<code>granularity === "day"</code>) rejimida mumkin.</li>
+<li>Menejer bo'lmagan foydalanuvchiga jadval tepasida izoh kartasi ko'rsatiladi: "Siz o'z natijalaringizni kiritasiz/ko'rasiz. Umumiy jami barcha hodimlar bo'yicha."</li>
+</ul>
+<h3 id="423-jadval-ustunlari">4.2.3. Jadval ustunlari</h3>
+<p>Jadval jami <strong>13 ustundan</strong> iborat (<code>COLS = 13</code>, birinchi ustun — kengaytirish tugmasi):</p>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Ustun sarlavhasi</th><th>Manba/formula</th><th>Format</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>(kengaytirish)</td><td>Ochish/yopish tugmasi (ChevronRight/ChevronDown)</td><td>—</td></tr>
+<tr><td>2</td><td><strong>Hodim</strong></td><td><code>emp.name</code> (avatar: ism birinchi harfi)</td><td>Matn, <code>sticky left-0</code></td></tr>
+<tr><td>3</td><td><strong>Sifatli</strong></td><td><code>agg.sifatli</code></td><td>Butun son (<code>fmt</code>)</td></tr>
+<tr><td>4</td><td><strong>Sifatsiz</strong></td><td><code>agg.sifatsiz</code></td><td>Butun son (<code>fmt</code>)</td></tr>
+<tr><td>5</td><td><strong>Aniqlanmagan</strong></td><td><code>agg.aniqlanmagan</code></td><td>Butun son (<code>fmt</code>)</td></tr>
+<tr><td>6</td><td><strong>Sotilgan mijoz</strong></td><td><code>agg.sotilgan_mijoz</code></td><td>Butun son (<code>fmt</code>)</td></tr>
+<tr><td>7</td><td><strong>Sotilgan mahsulot</strong></td><td><code>agg.sotilgan_mahsulot</code></td><td>Butun son (<code>fmt</code>)</td></tr>
+<tr><td>8</td><td><strong>Tushum</strong></td><td><code>agg.tushum</code> (USD)</td><td><code>$1,234.56</code> (<code>fmtUsd</code>)</td></tr>
+<tr><td>9</td><td><strong>Reja</strong></td><td><code>planByEmployee.get(emp.id)</code> (<code>plan_tushum</code>, USD)</td><td><code>fmtUsd</code>; reja yo'q bo'lsa "—"</td></tr>
+<tr><td>10</td><td><strong>Bajarilishi</strong></td><td>Tushum ÷ Reja × 100</td><td>Rangli <code>PlanBadge</code></td></tr>
+<tr><td>11</td><td><strong>Sifat %</strong></td><td>Sifatli ÷ (Sifatli + Sifatsiz) × 100</td><td>Rangli <code>PctBadge</code></td></tr>
+<tr><td>12</td><td><strong>Konversiya %</strong></td><td>Sotilgan mijoz ÷ Sifatli × 100</td><td>Rangli <code>PctBadge</code></td></tr>
+<tr><td>13</td><td><strong>O'rtacha chek</strong></td><td>Tushum ÷ Sotilgan mijoz (USD)</td><td><code>fmtUsd</code></td></tr>
+</tbody></table></div>
+<p>Har bir hodim satrining raqamli ustunlari uning barcha kunlik <code>employee_daily</code> satrlari yig'indisidir (<code>aggregateEmployee</code> funksiyasi). Yig'indi maydonlar: <code>gaplashgan</code>, <code>sifatli</code>, <code>sifatsiz</code>, <code>aniqlanmagan</code>, <code>sotilgan_mijoz</code>, <code>sotilgan_mahsulot</code>, <code>tushum</code> (<code>tushum</code> <code>Number()</code> orqali songa o'giriladi, chunki Supabase numeric ustunlarni satr sifatida qaytaradi).</p>
+<h3 id="424-hisoblanadigan-korsatkichlar-formulalar">4.2.4. Hisoblanadigan ko'rsatkichlar (formulalar)</h3>
+<p><code>lib/calc.ts</code> → <code>employeeDerived(a)</code> funksiyasi:</p>
+<ul>
+<li><strong>Sifat %</strong> = Sifatli ÷ (Sifatli + Sifatsiz) × 100</li>
+<li>Agar (Sifatli + Sifatsiz) = 0 bo'lsa → 0.</li>
+<li><strong>Konversiya %</strong> = Sotilgan mijoz ÷ Sifatli × 100</li>
+<li>Agar Sifatli = 0 bo'lsa → 0.</li>
+<li><strong>O'rtacha chek</strong> = Tushum ÷ Sotilgan mijoz</li>
+<li>Agar Sotilgan mijoz = 0 bo'lsa → 0.</li>
+<li><strong>Bajarilishi</strong> = Tushum ÷ Reja × 100 (<code>PlanBadge</code> ichida: <code>(done / plan) * 100</code>).</li>
+<li>Reja (0 yoki mavjud emas) bo'lsa → "—" ko'rsatiladi.</li>
+</ul>
+<h3 id="425-bajarilishi-ustunining-rang-mexanizmi">4.2.5. "Bajarilishi" ustunining rang mexanizmi</h3>
+<p><code>planTone(pct)</code> funksiyasi bajarilish foizini uch holatga ajratadi:</p>
+<div class="tw"><table>
+<thead><tr><th>Shart</th><th>Ohang (tone)</th><th>Rang</th></tr></thead>
+<tbody>
+<tr><td>pct ≥ 100</td><td><code>success</code></td><td>Yashil</td></tr>
+<tr><td>50 ≤ pct &lt; 100</td><td><code>warning</code></td><td>Sariq</td></tr>
+<tr><td>pct &lt; 50</td><td><code>danger</code></td><td>Qizil</td></tr>
+</tbody></table></div>
+<p><code>PlanBadge</code> yumaloq pill ko'rinishida <code>fmtPct(pct)%</code> matnini chiqaradi; reja belgilanmagan bo'lsa (<code>plan</code> = 0) kulrang "—".</p>
+<h3 id="426-sifat-va-konversiya-ranglari">4.2.6. "Sifat %" va "Konversiya %" ranglari</h3>
+<p>Bu ikki ustun <code>PctBadge</code> orqali chiqadi; rang <code>pctTone(value)</code> bilan aniqlanadi:</p>
+<div class="tw"><table>
+<thead><tr><th>Shart</th><th>Ohang</th><th>Rang</th></tr></thead>
+<tbody>
+<tr><td>value &lt; 30</td><td><code>low</code></td><td>Qizil</td></tr>
+<tr><td>30 ≤ value &lt; 60</td><td><code>mid</code></td><td>Sariq</td></tr>
+<tr><td>value ≥ 60</td><td><code>high</code></td><td>Yashil</td></tr>
+</tbody></table></div>
+<h3 id="427-kunlik-detalizatsiya-drill-down">4.2.7. Kunlik detalizatsiya (drill-down)</h3>
+<ul>
+<li>Har bir hodim satrining oldidagi tugma (<code>ChevronRight</code>/<code>ChevronDown</code>) bosilganda <code>toggleExpand(empId)</code> orqali o'sha hodim satri kengaytiriladi (<code>expandedId</code>). Bir vaqtning o'zida faqat bitta hodim ochiq bo'ladi.</li>
+<li>Ochilgan panelda sarlavha: "<code>{hodim ismi}</code> — <code>{periodHeader}</code> bo'yicha".</li>
+<li>Ichki jadval ustunlari: <code>{periodHeader}</code> (masalan "Kun"), <strong>Sifatli</strong>, <strong>Sifatsiz</strong>, <strong>Aniqlanmagan</strong>, <strong>Sotilgan mijoz</strong>, <strong>Sotilgan mahsulot</strong>, <strong>Tushum</strong>, va (agar tahrirlash mumkin bo'lsa) <strong>Amal</strong>.</li>
+<li>Har bir davr (<code>period</code>) satri o'sha hodimning shu kun/davrdagi yig'indisidir (<code>periodAgg</code> → <code>aggregateEmployee</code>). <code>granularity === "day"</code> bo'lsa <code>String(r.day) === periodKey</code>, aks holda <code>r.month === periodKey</code> bo'yicha filtrlanadi.</li>
+<li>Ma'lumot bo'sh bo'lgan satrlar (<code>sifatli</code>, <code>sifatsiz</code>, <code>tushum</code>, <code>sotilgan_mijoz</code> — hammasi 0) kulrang rangda ko'rsatiladi.</li>
+<li>"Amal" ustunidagi qalam (<code>Pencil</code>) tugmasi kiritish modalini ochadi (<code>openEdit</code>). Tugmaning <code>aria-label</code>: "<code>{davr}</code>-kun natijasini tahrirlash".</li>
+</ul>
+<h3 id="428-natija-kiritish-modal-oynasi">4.2.8. Natija kiritish modal oynasi</h3>
+<p>Qalam tugmasi bosilganda <code>Dialog</code> (modal) ochiladi. Sarlavha: <strong>"Natijani kiritish"</strong>, tavsif: "<code>{hodim ismi}</code> — <code>{davr}</code>-<code>{periodHeader kichik harfda}</code>".</p>
+<p>Modal maydonlari (barchasi manfiy bo'lmagan butun son, <code>NumField</code>, <code>min=0</code>):</p>
+<ul>
+<li><strong>Sifatli</strong></li>
+<li><strong>Sifatsiz</strong></li>
+<li><strong>Aniqlanmagan</strong></li>
+<li><strong>Sotilgan mijoz</strong></li>
+<li><strong>Sotilgan mahsulot</strong> (ikki ustunni egallaydi)</li>
+<li><strong>Tushum</strong> — son maydoni + valyuta almashtirgichi (<code>MoneyCurrencyToggle</code>: USD / UZS).</li>
+</ul>
+<p>Modal ochilganda mavjud qiymatlar <code>periodAgg</code> orqali oldindan to'ldiriladi; Tushum <code>round2</code> (2 kasr xona) bilan ko'rsatiladi.</p>
+<p><strong>Tushum valyutasi:</strong></p>
+<ul>
+<li>Standart holat — USD (<code>tushumCurrency = "USD"</code>). Izoh: "Dollarda kiritilyapti. So'mni tanlasangiz avtomatik dollarga aylanadi."</li>
+<li>UZS tanlansa va kurs mavjud bo'lsa, jonli konversiya ko'rsatiladi: "Dollarda: $<code>{somToUsd(qiymat, usdRate)}</code>".</li>
+<li>Saqlashda tushum <code>toUsd(qiymat, tushumCurrency, usdRate)</code> orqali USD'ga o'giriladi:</li>
+<li><strong>USD</strong> → o'zgarishsiz saqlanadi.</li>
+<li><strong>UZS</strong> → USD = So'm ÷ MB kursi (<code>somToUsd</code>, kurs 0 bo'lsa 0).</li>
+</ul>
+<p><strong>Tugmalar:</strong> "Bekor qilish" (modalni yopadi) va "Saqlash" (saqlanayotganda "Saqlanmoqda...", <code>disabled</code>).</p>
+<h3 id="429-optimistik-ui-va-saqlash-oqimi">4.2.9. Optimistik UI va saqlash oqimi</h3>
+<ul>
+<li>Kunlik satrlar <code>useOptimistic</code> orqali boshqariladi (<code>optimisticDaily</code>). Saqlash bosilganda:</li>
+<li><code>applyOptimisticDaily(optimisticRow)</code> — yangi qiymat darhol jadvalga qo'llanadi (optimistik satr <code>id: optimistic-{empId}-{month}-{day}</code>).</li>
+<li><code>upsertEmployeeDay(...)</code> server harakati chaqiriladi (<code>app/actions/data.ts</code>).</li>
+<li>Xato bo'lsa — <code>toast.error(res.error)</code>, optimistik qiymat avtomatik qaytariladi.</li>
+<li>Muvaffaqiyat bo'lsa — <code>toast.success("{kun}-kun saqlandi")</code>, modal yopiladi.</li>
+<li>Server tomonidagi <code>upsertEmployeeDay</code> tekshiruvlari:</li>
+<li>Ruxsat: menejer bo'lmasa faqat o'z <code>employee_id</code>si uchun ("Faqat o'z natijalaringizni kirita olasiz").</li>
+<li>Oy formati <code>YYYY-MM</code> (<code>isValidMonth</code>).</li>
+<li>Kun 1 dan <code>daysInMonth(month)</code> gacha bo'lishi kerak.</li>
+<li>Barcha son maydonlari <code>Number.isFinite</code> va manfiy emas ("Qiymatlar manfiy bo'lishi mumkin emas").</li>
+<li><code>employee_daily</code> jadvaliga <code>onConflict: "employee_id,month,day"</code> bilan upsert; so'ng <code>revalidatePath("/")</code>.</li>
+</ul>
+<h3 id="4210-umumiy-jami-qatori">4.2.10. "Umumiy jami" qatori</h3>
+<p>Jadval oxirida barcha ko'rinadigan hodimlar bo'yicha yig'indi qatori (<code>Umumiy jami</code>) chiqadi:</p>
+<ul>
+<li>Raqamli ustunlar: barcha hodimlarning yig'indilari qo'shiladi (<code>gaplashgan</code>, <code>sifatli</code>, <code>sifatsiz</code>, <code>aniqlanmagan</code>, <code>sotilgan_mijoz</code>, <code>sotilgan_mahsulot</code>, <code>tushum</code>).</li>
+<li><strong>Reja</strong> ustuni: barcha hodimlar rejalari yig'indisi (<code>totalsPlan</code>); reja yo'q bo'lsa "—".</li>
+<li><strong>Bajarilishi</strong>, <strong>Sifat %</strong>, <strong>Konversiya %</strong>, <strong>O'rtacha chek</strong> yig'ma qiymatlar asosida qayta hisoblanadi (<code>totalsDerived = employeeDerived(totals)</code>).</li>
+</ul>
+<h3 id="4211-kpi-kartalar">4.2.11. KPI kartalar</h3>
+<p>Jadval tepasida 4 ta KPI karta (<code>KpiCard</code>):</p>
+<div class="tw"><table>
+<thead><tr><th>Karta</th><th>Qiymat</th><th>Formula</th></tr></thead>
+<tbody>
+<tr><td><strong>Jami lead</strong></td><td><code>fmt(totals.sifatli + totals.sifatsiz)</code></td><td>Sifatli + Sifatsiz</td></tr>
+<tr><td><strong>Jami sotilgan mijoz</strong></td><td><code>fmt(totals.sotilgan_mijoz)</code></td><td>Sotilgan mijozlar yig'indisi</td></tr>
+<tr><td><strong>Jami tushum</strong></td><td><code>fmtUsd(totals.tushum)</code></td><td>Umumiy tushum (USD)</td></tr>
+<tr><td><strong>O'rtacha konversiya %</strong></td><td><code>{fmt(totalsDerived.konversiyaPct)}%</code></td><td>Umumiy Sotilgan mijoz ÷ Umumiy Sifatli × 100</td></tr>
+</tbody></table></div>
+<p>"O'rtacha konversiya %" kartasining ohangi qiymatiga qarab o'zgaradi (<code>pctKpiTone</code>): &lt; 30 qizil, &lt; 60 sariq, ≥ 60 yashil.</p>
+<hr>
+<h2 id="43-hodim-rejalari">4.3. Hodim rejalari</h2>
+<h3 id="431-umumiy-tavsif">4.3.1. Umumiy tavsif</h3>
+<p>"Hodim rejalari" — <strong>faqat menejer</strong> uchun mo'ljallangan dialog (<code>components/employee-plans-dialog.tsx</code>, <code>EmployeePlansDialog</code>). Bu yerda menejer oylik umumiy tushum rejasini ("Reja Tushum" = <code>plan_settings.plan_sotuv</code>) har bir hodimga taqsimlaydi. Har bir hodimning oylik tushum rejasi <code>employee_plans.plan_tushum</code> (USD) ustunida saqlanadi.</p>
+<h3 id="432-dialog-interfeysi">4.3.2. Dialog interfeysi</h3>
+<ul>
+<li>Sarlavha: <strong>"Hodim rejalari"</strong>.</li>
+<li>Tavsif: "<code>{oy nomi}</code> — oylik "Reja Tushum"ni hodimlarga taqsimlang ($)".</li>
+<li>Har bir hodim uchun bir qator: avatar (ism birinchi harfi), hodim ismi, va <code>$</code> prefiksli son maydoni (<code>min=0</code>, <code>plan_tushum</code> qiymati). <code>aria-label</code>: "<code>{hodim ismi}</code> oylik tushum rejasi".</li>
+<li>Dialog har ochilganda tanlangan oyning saqlangan rejalari bilan qayta sinxronlanadi (<code>useEffect</code>), shunda oy almashganda oldingi oyning raqamlari o'tib qolmaydi.</li>
+<li>Hodim yo'q bo'lsa: "Hodim yo'q. "Hodimlar" bo'limidan sotuvchi qo'shing." xabari.</li>
+</ul>
+<h3 id="433-taqsimlash-yigindisi-allocation-summary">4.3.3. Taqsimlash yig'indisi (allocation summary)</h3>
+<p>Dialog pastida oylik reja bilan sinxron blok ko'rsatiladi.</p>
+<p><strong>Oylik reja belgilangan bo'lsa</strong> (<code>target = Number(plan_sotuv) &gt; 0</code>):</p>
+<div class="tw"><table>
+<thead><tr><th>Qator</th><th>Qiymat/formula</th></tr></thead>
+<tbody>
+<tr><td><strong>Oylik reja (Reja Tushum)</strong></td><td><code>target</code> = <code>plan_settings.plan_sotuv</code></td></tr>
+<tr><td><strong>Taqsimlangan</strong></td><td><code>allocated</code> = barcha hodimlar kiritilgan qiymatlari yig'indisi</td></tr>
+<tr><td><strong>Qoldiq</strong></td><td><code>remaining</code> = Oylik reja − Taqsimlangan</td></tr>
+</tbody></table></div>
+<ul>
+<li>Qoldiq manfiy bo'lsa qizil, aks holda yashil rangda.</li>
+<li>Taqsimlangan yig'indi oylik rejadan oshsa (<code>over = target &gt; 0 &amp;&amp; allocated &gt; target</code>), "Taqsimlangan" qizil rangda va ogohlantirish chiqadi: "Yig'indi oylik rejadan oshib ketdi — kamaytiring, aks holda saqlab bo'lmaydi."</li>
+</ul>
+<p><strong>Oylik reja belgilanmagan bo'lsa</strong> (<code>target = 0</code>):</p>
+<ul>
+<li>Faqat "Jami taqsimlangan" ko'rsatiladi va izoh: "Oylik "Reja Tushum" hali sozlanmagan — "Reja sozlamalari"dan kiriting. Shunda yig'indi shu rejadan oshmasligi tekshiriladi."</li>
+</ul>
+<h3 id="434-sinxronlik-va-bloklash-mexanizmi-ikki-qatlamli">4.3.4. Sinxronlik va bloklash mexanizmi (ikki qatlamli)</h3>
+<p>Hodimlar rejalarining yig'indisi oylik "Reja Tushum"dan <strong>oshib ketishi taqiqlanadi</strong>. Bu ikki qatlamda ta'minlanadi:</p>
+<p><strong>1-qatlam — Client (dialog):</strong></p>
+<ul>
+<li>"Saqlash" tugmasi <code>disabled = pending || employees.length === 0 || over</code> — ya'ni yig'indi oylik rejadan oshsa (<code>over</code>) tugma o'chadi.</li>
+<li><code>submit()</code> ichida ham <code>over</code> bo'lsa saqlash to'xtatiladi va <code>toast.error("Hodimlar rejalari yig'indisi oylik rejadan oshib ketdi")</code>.</li>
+</ul>
+<p><strong>2-qatlam — Server (<code>upsertEmployeePlans</code>, <code>app/actions/data.ts</code>):</strong></p>
+<ul>
+<li>Ruxsat: <code>requireManager()</code> — menejer bo'lmasa "Ruxsat yo'q".</li>
+<li>Oy formati <code>YYYY-MM</code>; reja ro'yxati bo'sh emas; har bir <code>employee_id</code> mavjud va <code>plan_tushum</code> <code>Number.isFinite</code> hamda manfiy emas.</li>
+<li>Oylik reja <code>plan_settings</code> dan qayta o'qiladi (<code>plan_sotuv</code>).</li>
+<li><strong>Fail-closed:</strong> agar oylik rejani o'qishda xato bo'lsa (<code>planErr</code>), saqlash bloklanadi — "Oylik rejani tekshirib bo'lmadi, qayta urinib ko'ring". Bu o'qish nosozligida oshib ketish tekshiruvini jimgina o'tkazib yubormaslikni kafolatlaydi.</li>
+<li>Oylik reja &gt; 0 bo'lsa va yig'indi (<code>allocated</code>) undan katta bo'lsa saqlash rad etiladi: "Hodimlar rejalari yig'indisi (<code>{allocated}</code>) oylik "Reja Tushum" (<code>{monthlyTarget}</code>) dan oshib ketdi".</li>
+</ul>
+<h3 id="435-saqlash-oqimi">4.3.5. Saqlash oqimi</h3>
+<ol>
+<li>Menejer qiymatlarni kiritadi va "Saqlash"ni bosadi.</li>
+<li><code>over</code> bo'lmasa <code>upsertEmployeePlans({ month, plans: [{ employee_id, plan_tushum }] })</code> chaqiriladi (har bir hodim uchun bir satr).</li>
+<li>Server tekshiruvlaridan o'tsa, <code>employee_plans</code> jadvaliga <code>onConflict: "employee_id,month"</code> bilan bulk upsert amalga oshiriladi, so'ng <code>revalidatePath("/")</code>.</li>
+<li>Xato bo'lsa — <code>toast.error(res.error)</code>; muvaffaqiyat bo'lsa — <code>toast.success("Hodim rejalari saqlandi")</code> va dialog yopiladi.</li>
+</ol>
+<h3 id="436-bogliqlik-42-jadvali-bilan-aloqasi">4.3.6. Bog'liqlik: 4.2 jadvali bilan aloqasi</h3>
+<p>Saqlangan <code>employee_plans.plan_tushum</code> qiymatlari 4.2 jadvalidagi <strong>Reja</strong> ustuniga (<code>planByEmployee</code>) va shu asosda <strong>Bajarilishi</strong> (Tushum ÷ Reja × 100) hisobiga hamda "Umumiy jami" qatoridagi umumiy rejaga (<code>totalsPlan</code>) uzatiladi.</p>
+<hr>
+<p>Tegishli fayllar:</p>
+<ul>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/employee-results.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/employee-plans-dialog.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/calc.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/app/actions/data.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/rnp.ts</code> (formatlash/valyuta yordamchilari)</li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/pct-badge.tsx</code> (foiz rang ohanglari)</li>
+</ul>
+<h2 id="44-qoshimcha-funksiyalar">4.4. Qo'shimcha funksiyalar</h2>
+<p>Ushbu bo'lim RNP Dashboard tizimining asosiy hisobot va kirish funksiyalaridan tashqari ko'makchi (yordamchi) funksiyalarni tavsiflaydi: oylik reja sozlamalari, Excel eksport, valyuta konversiyasi, davr tanlash, mavzu (tema) almashtirish, yuklanish skeleti hamda optimistik UI orqali tezkorlik.</p>
+<h3 id="441-reja-sozlamalari-dialogi">4.4.1. Reja sozlamalari dialogi</h3>
+<p><strong>Fayl:</strong> <code>components/plan-settings-dialog.tsx</code> <strong>Server harakati (server action):</strong> <code>app/actions/data.ts</code> → <code>upsertPlanSettings</code> <strong>Ma'lumotlar bazasi jadvali:</strong> <code>plan_settings</code> (kalit: <code>month</code>, konflikt bo'yicha: <code>onConflict: "month"</code>)</p>
+<p>Menejer (super_admin / admin) tanlangan oy uchun oylik rejani belgilaydigan modal oyna. Dialog sarlavhasi — <strong>"Reja sozlamalari"</strong>, tavsifi — <code>monthLabel(month)</code> yordamida shakllantiriladi, masalan: <strong>"Iyul 2026 uchun oylik reja"</strong>.</p>
+<p><strong>Kiritish maydonlari (barchasi <code>type="number"</code>):</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Yorliq (Label)</th><th>Maydon nomi (id / DB ustuni)</th><th>Izoh (koddagi tavsif)</th><th>Placeholder</th></tr></thead>
+<tbody>
+<tr><td><strong>Reja Byudjet ($)</strong></td><td><code>plan_byudjet</code></td><td>Oylik byudjet rejasi (dollarda)</td><td><code>0</code></td></tr>
+<tr><td><strong>Kunlik sifatli lead rejasi</strong></td><td><code>plan_lead</code></td><td>Bir kunda nechta sifatli lead kerakligi. "Reja Lid" va "Sifat %" shu songa nisbatan hisoblanadi</td><td><code>masalan: 15</code></td></tr>
+<tr><td><strong>Reja Tushum ($)</strong></td><td><code>plan_sotuv</code></td><td>Oylik daromad (tushum) rejasi dollarda. "Tushum reja %" jami tushumni shu songa nisbatan hisoblaydi</td><td><code>masalan: 100000</code></td></tr>
+</tbody></table></div>
+<p><strong>Xatti-harakat:</strong></p>
+<ul>
+<li>Dialog <strong>har ochilganda</strong> forma tanlangan oyning joriy rejasiga qayta sinxronlanadi (<code>useEffect</code>, <code>[open, plan]</code> bog'liqliklari bilan). Bu "yumshoq" oy almashtirishda oldingi oy qiymatlarining yangi oyga yozib qo'yilishining oldini oladi.</li>
+<li>Saqlash tugmasi bosilganda qiymatlar <code>Number(...) || 0</code> orqali songa aylantiriladi va <code>upsertPlanSettings</code> chaqiriladi.</li>
+<li>Muvaffaqiyatda <strong>"Reja sozlamalari saqlandi"</strong> (toast, sonner) chiqadi va dialog yopiladi; xatoda server qaytargan xatolik matni toast orqali ko'rsatiladi.</li>
+<li>Yuborish davomida tugmalar <code>disabled</code> bo'ladi; saqlash tugmasi matni <strong>"Saqlanmoqda..."</strong> ga o'zgaradi, aks holda <strong>"Saqlash"</strong>. Ikkinchi tugma — <strong>"Bekor qilish"</strong>.</li>
+</ul>
+<p><strong>Serverdagi validatsiya (<code>upsertPlanSettings</code>):</strong></p>
+<ul>
+<li>Faqat menejer (<code>requireManager()</code>); aks holda <strong>"Ruxsat yo'q"</strong>.</li>
+<li>Oy formati <code>^\d{4}-\d{2}$</code> bo'lishi shart, aks holda <strong>"Noto'g'ri oy"</strong>.</li>
+<li>Har uch qiymat chekli (<code>Number.isFinite</code>) va manfiy emas bo'lishi shart, aks holda <strong>"Qiymatlar manfiy bo'lishi mumkin emas"</strong>.</li>
+<li>Muvaffaqiyatli upsertdan so'ng <code>revalidatePath("/")</code> chaqiriladi.</li>
+</ul>
+<h3 id="442-excel-eksport">4.4.2. Excel eksport</h3>
+<p><strong>Fayl:</strong> <code>lib/export.ts</code> → <code>exportWorkbook(...)</code> <strong>Kutubxona:</strong> <code>xlsx</code> (v0.18.5) <strong>Ishga tushirish:</strong> <code>components/dashboard.tsx</code> — header'dagi <strong>"Eksport"</strong> tugmasi (Download ikonkasi bilan; mobilda faqat ikonka, <code>sm:</code> dan boshlab matn ko'rinadi) → <code>handleExport()</code>.</p>
+<p>Eksport tanlangan davr (oylik yoki yillik) ma'lumotlaridan <code>.xlsx</code> fayl yaratadi va brauzerda <code>XLSX.writeFile</code> orqali yuklab beradi. Fayl nomi: <code>RNP_Dashboard_${safeLabel}.xlsx</code>, bunda <code>safeLabel</code> — davr yorlig'idagi bo'shliqlar <code>_</code> ga almashtirilgan variant (masalan <code>RNP_Dashboard_Iyul_2026.xlsx</code> yoki <code>RNP_Dashboard_2026-yil.xlsx</code>).</p>
+<p><strong>Muhim:</strong> Eksport faqat sotuvchilar (<code>salespeople</code>) ma'lumotlari bo'yicha shakllanadi — menejerlarning shaxsiy kunlik qatorlari chiqarib tashlanadi, shunda KPI'lar bilan eksport bir xil populyatsiya ustidan hisoblanadi. Barcha pul qiymatlari USD (bazaviy valyuta) da eksport qilinadi.</p>
+<p><strong>1-varaq — "Byudjet"</strong> (marketing byudjeti, kun bo'yicha; oy+kun bo'yicha saralangan):</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Manba</th></tr></thead>
+<tbody>
+<tr><td>Oy</td><td><code>monthShortLabel(m.month)</code> (masalan "Iyul")</td></tr>
+<tr><td>Kun</td><td><code>m.day</code></td></tr>
+<tr><td>Byudjet ($)</td><td><code>round(Number(m.byudjet))</code></td></tr>
+</tbody></table></div>
+<p><strong>2-varaq — "Hodimlar jami"</strong> (har bir sotuvchi bo'yicha oylik yig'indi; <code>aggregateEmployee</code> + <code>employeeDerived</code> orqali hisoblanadi):</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Formula / manba</th></tr></thead>
+<tbody>
+<tr><td>Hodim</td><td><code>emp.name</code></td></tr>
+<tr><td>Sifatli</td><td><code>agg.sifatli</code></td></tr>
+<tr><td>Sifatsiz</td><td><code>agg.sifatsiz</code></td></tr>
+<tr><td>Aniqlanmagan</td><td><code>agg.aniqlanmagan</code></td></tr>
+<tr><td>Sotilgan mijoz</td><td><code>agg.sotilgan_mijoz</code></td></tr>
+<tr><td>Sotilgan mahsulot</td><td><code>agg.sotilgan_mahsulot</code></td></tr>
+<tr><td>Tushum ($)</td><td><code>round(agg.tushum)</code></td></tr>
+<tr><td>Reja ($)</td><td>hodimning <code>plan_tushum</code> (<code>employee_plans</code> dan)</td></tr>
+<tr><td>Bajarilishi %</td><td><code>Bajarilishi % = (Tushum ÷ Reja) × 100</code> (reja 0 bo'lsa 0)</td></tr>
+<tr><td>Sifat %</td><td><code>der.sifatPct</code></td></tr>
+<tr><td>Konversiya %</td><td><code>der.konversiyaPct</code></td></tr>
+<tr><td>O'rtacha chek ($)</td><td><code>der.ortachaChek</code></td></tr>
+</tbody></table></div>
+<p><strong>3-varaq — "Hodimlar kunlik"</strong> (har bir sotuvchining kunlik tafsiloti; oy+kun bo'yicha saralangan):</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Manba</th></tr></thead>
+<tbody>
+<tr><td>Hodim</td><td><code>emp.name</code></td></tr>
+<tr><td>Oy</td><td><code>monthShortLabel(d.month)</code></td></tr>
+<tr><td>Kun</td><td><code>d.day</code></td></tr>
+<tr><td>Sifatli</td><td><code>d.sifatli</code></td></tr>
+<tr><td>Sifatsiz</td><td><code>d.sifatsiz</code></td></tr>
+<tr><td>Aniqlanmagan</td><td><code>d.aniqlanmagan</code></td></tr>
+<tr><td>Sotilgan mijoz</td><td><code>d.sotilgan_mijoz</code></td></tr>
+<tr><td>Sotilgan mahsulot</td><td><code>d.sotilgan_mahsulot</code></td></tr>
+<tr><td>Tushum ($)</td><td><code>round(Number(d.tushum))</code></td></tr>
+</tbody></table></div>
+<p>Barcha pul va foiz qiymatlari <code>round(n, 2)</code> funksiyasi bilan 2 xonagacha yaxlitlanadi. Muvaffaqiyatda <strong>"Excel fayli yuklab olindi"</strong>, xatoda <strong>"Eksport qilishda xatolik"</strong> (toast) ko'rsatiladi.</p>
+<h3 id="443-valyuta-konversiyasi-mbcbu-kursi-som-usd">4.4.3. Valyuta konversiyasi (MB/CBU kursi, so'm → USD)</h3>
+<p><strong>Fayllar:</strong> <code>lib/cbu.ts</code> (kurs olish), <code>lib/rnp.ts</code> (formatlash va konversiya)</p>
+<p>Tizimda barcha pul qiymatlari <strong>USD</strong> da (bazaviy valyuta) saqlanadi va ko'rsatiladi. O'zbekiston Markaziy banki (CBU) kursi <strong>faqat</strong> so'm ko'rinishida kiritilgan summani kiritish paytida USD'ga o'girish uchun ishlatiladi.</p>
+<p><strong>Kurs olish — <code>getUsdRate()</code> (<code>lib/cbu.ts</code>):</strong></p>
+<ul>
+<li>Manba: <code>https://cbu.uz/uz/arkhiv-kursov-valyut/json/USD/</code> (ochiq, autentifikatsiyasiz endpoint).</li>
+<li>Sahifa yuklanishini bloklamaslik uchun so'rov <code>AbortController</code> bilan <strong>~3 soniyadan</strong> keyin bekor qilinadi.</li>
+<li>Kesh: <code>next: { revalidate: 86400 }</code> — kurs sutkasiga bir marta yangilanadi (kun davomida keshdan olinadi).</li>
+<li>Qaytaradi: 1 USD uchun so'm miqdorini. Kurs mavjud bo'lmasa yoki so'rov muvaffaqiyatsiz bo'lsa <strong><code>0</code></strong> qaytadi (chaqiruvchilar <code>0</code>ni "kurs noma'lum" deb qabul qiladi).</li>
+</ul>
+<p><strong>Konversiya va formatlash yordamchilari (<code>lib/rnp.ts</code>):</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Funksiya</th><th>Vazifasi</th><th>Natija namunasi</th></tr></thead>
+<tbody>
+<tr><td><code>fmtUsdPlain(usd)</code></td><td>USD summasini belgisiz, maks. 2 kasr bilan (<code>en-US</code>)</td><td><code>1,234.56</code></td></tr>
+<tr><td><code>fmtUsd(usd)</code></td><td>USD summasini <code>$</code> belgisi bilan (KPI kartalari, jamilar)</td><td><code>$1,234.56</code></td></tr>
+<tr><td><code>somToUsd(som, rate)</code></td><td>So'mni USD'ga: <code>USD = so'm ÷ kurs</code>; kurs 0 bo'lsa 0</td><td>—</td></tr>
+<tr><td><code>toUsd(amount, from, rate)</code></td><td>Kiritilgan summani USD'ga normallashtiradi: <code>UZS</code> bo'lsa <code>somToUsd</code>, <code>USD</code> bo'lsa o'zi</td><td>—</td></tr>
+<tr><td><code>fmtPct(n)</code></td><td>Foizni formatlash; `0 &lt;</td><td>n</td></tr>
+</tbody></table></div>
+<p>Kirish valyutasi <code>InputCurrency = "USD" | "UZS"</code> tipi bilan belgilanadi. So'm summasi kiritilganda <code>toUsd(amount, "UZS", rate)</code> orqali darhol USD'ga o'giriladi va bazaga USD'da saqlanadi.</p>
+<h3 id="444-davr-tanlash-oylik-yillik-korinish">4.4.4. Davr tanlash (oylik / yillik ko'rinish)</h3>
+<p><strong>Fayl:</strong> <code>components/period-picker.tsx</code> <strong>Yordamchilar (<code>lib/rnp.ts</code>):</strong> <code>monthNamesUz()</code>, <code>monthLabel()</code>, <code>currentMonth()</code>, <code>currentYear()</code>, <code>yearMonths()</code>, <code>daysInMonth()</code></p>
+<p>Header'dagi ochiladigan (dropdown) tanlagich (Calendar + ChevronDown ikonkalari, <code>aria-label="Davrni tanlash"</code>). Tanlagich yorlig'i:</p>
+<ul>
+<li>Yillik ko'rinishda: <code>${year} — yillik</code>.</li>
+<li>Oylik ko'rinishda: <code>monthLabel(month)</code> (masalan "Iyul 2026").</li>
+</ul>
+<p><strong>Ikki rejim (toggle):</strong></p>
+<ul>
+<li><strong>"Oylik"</strong> — 3 ustunli setkada 12 oy (<code>monthNamesUz()</code>). Oy tanlanganda: <code>router.push('/?month=${browseYear}-${mm}')</code>. Faol oy <code>bg-primary text-primary-foreground</code> bilan ajratiladi.</li>
+<li><strong>"Yillik"</strong> — tanlangan yil bo'yicha barcha oylar yig'indisi. <strong>"${browseYear}-yilni ko'rish"</strong> tugmasi: <code>router.push('/?view=yearly&amp;year=${browseYear}')</code>.</li>
+</ul>
+<p><strong>Yil navigatsiyasi:</strong> chap/o'ng chevron tugmalari (<code>aria-label="Oldingi yil"</code> / <code>"Keyingi yil"</code>) <code>browseYear</code>ni ±1 o'zgartiradi.</p>
+<p><strong>Serverda o'qish (<code>app/page.tsx</code>):</strong> URL parametrlari validatsiyalanadi (<code>year</code> — <code>^\d{4}$</code>, <code>month</code> — <code>^\d{4}-\d{2}$</code>); noto'g'ri bo'lsa <code>currentYear()</code> / <code>currentMonth()</code> ishlatiladi. Yillik rejimda <code>marketing_daily</code> va <code>employee_daily</code> <code>like("month", "${year}-%")</code> bo'yicha, oylik rejimda <code>eq("month", month)</code> bo'yicha olinadi. Oyning haqiqiy kunlar sonidan (<code>daysInMonth</code>) oshib ketgan qatorlar ikkala jadval bir xil kunlar to'plami ustidan yig'ilishi uchun chiqarib tashlanadi. Dropdown tashqarisiga bosilganda (<code>mousedown</code> tinglagichi) yopiladi.</p>
+<h3 id="445-mavzu-tema-yorug-qorongi">4.4.5. Mavzu (tema): yorug' / qorong'i</h3>
+<p><strong>Fayllar:</strong> <code>components/theme-provider.tsx</code>, <code>components/theme-toggle.tsx</code>, <code>app/layout.tsx</code>, <code>app/globals.css</code> <strong>Kutubxona:</strong> <code>next-themes</code> (v0.4.6)</p>
+<p><strong>Provider (<code>app/layout.tsx</code>):</strong> <code>ThemeProvider</code> <code>attribute="class"</code>, <code>defaultTheme="light"</code>, <code>enableSystem</code>, <code>disableTransitionOnChange</code> parametrlari bilan ilovani o'raydi. <code>&lt;html&gt;</code> da <code>suppressHydrationWarning</code> va <code>lang="uz"</code> o'rnatilgan.</p>
+<p><strong>Almashtirgich (<code>components/theme-toggle.tsx</code>):</strong> header'dagi tugma. Gidratsiya nomuvofiqligining oldini olish uchun <code>mounted</code> bo'lguncha barqaror ikonka ko'rsatiladi (server mavzuni bilmaydi). <code>resolvedTheme === "dark"</code> holatiga qarab Sun/Moon ikonkalari animatsiya bilan (scale/rotate/opacity) almashadi. <code>aria-label</code> va <code>title</code> holatga mos: <strong>"Yorug' mavzuga o'tish"</strong> / <strong>"Qorong'i mavzuga o'tish"</strong>.</p>
+<p><strong>Ranglar — "Refined analytics" mavzusi (<code>app/globals.css</code>):</strong> barcha ranglar <strong>OKLCH</strong> formatida (yorug'/qorong'i o'rtasida perseptual tekis o'tish uchun). Brend rangi — chuqur indigo (<code>--primary</code>), sirt ranglari — issiq-slate. <code>:root</code> (yorug', <code>color-scheme: light</code>) va <code>.dark</code> (qorong'i, <code>color-scheme: dark</code>) uchun to'liq CSS o'zgaruvchilari to'plami aniqlangan: <code>--background</code>, <code>--foreground</code>, <code>--card</code>, <code>--popover</code>, <code>--primary</code>, <code>--secondary</code>, <code>--muted</code>, <code>--accent</code>, <code>--destructive</code>, <code>--success</code>, <code>--warning</code>, <code>--border</code>, <code>--input</code>, <code>--ring</code>, <code>--chart-1..5</code>, <code>--sidebar-<em></code> va boshqalar. <code>@theme inline</code> bloki bu o'zgaruvchilarni Tailwind rang tokenlariga (<code>--color-</em></code>) va radius shkalasiga (<code>--radius-sm..4xl</code>, <code>--radius: 0.7rem</code>) bog'laydi. <code>body</code>ga yuqori-markazda indigo yorug'lik beruvchi <code>radial-gradient</code> fon, brendlangan matn selektsiyasi (<code>::selection</code>) va nozik skrollbarlar qo'shilgan.</p>
+<h3 id="446-yuklanish-skeleti-loading-skeleton">4.4.6. Yuklanish skeleti (loading skeleton)</h3>
+<p><strong>Fayl:</strong> <code>app/loading.tsx</code></p>
+<p>Dashboard marshruti (qayta) yuklanayotganda — masalan oy/davr almashtirishda — darhol ko'rsatiladigan skelet. Ma'lumot olmaydigan sof markap (<code>animate-pulse</code> bilan). Tarkibi haqiqiy dashboard tuzilishini takrorlaydi:</p>
+<ul>
+<li><strong>Header skeleti:</strong> logo, sarlavha, davr tanlagich, eksport, mavzu tugmasi va foydalanuvchi menyusi o'rniga plagsholderlar (<code>sticky top-0</code>, <code>backdrop-blur-xl</code>).</li>
+<li><strong>Tablar skeleti:</strong> <code>h-10 w-72</code> blok.</li>
+<li><strong>~8 ta KPI plagsholder:</strong> <code>grid-cols-2 lg:grid-cols-4</code> setkada karta shakllari.</li>
+<li><strong>Jadval plagsholderi:</strong> sarlavha qatori va 8 ta qator (<code>divide-y</code>).</li>
+</ul>
+<p>Bu skelet oy/davr almashtirishda oq ekran o'rniga darhol vizual javob beradi.</p>
+<h3 id="447-optimistik-ui-va-tezkorlik">4.4.7. Optimistik UI va tezkorlik</h3>
+<p><strong>Fayllar:</strong> <code>components/marketing-table.tsx</code>, <code>components/employee-results.tsx</code>, <code>app/page.tsx</code></p>
+<ul>
+<li><strong>Optimistik yangilanish:</strong> kunlik ma'lumot kiritishda <code>useOptimistic</code> + <code>useTransition</code> ishlatiladi (<code>optimisticMarketing</code> / <code>optimisticDaily</code>). Foydalanuvchi qiymat kiritganda o'zgarish serverdan javob kelishini kutmasdan darhol interfeysga aks etadi; <code>startTransition</code> ichida server harakati chaqiriladi.</li>
+<li><strong>Non-bloking CBU olish (<code>app/page.tsx</code>):</strong> <code>getUsdRate()</code> promise ma'lumotlar bazasi so'rovlaridan <strong>oldin</strong> boshlanadi (<code>usdRatePromise</code>) va faqat oxirida <code>await</code> qilinadi, shunday qilib kurs olish DB so'rovlariga parallel ketadi va sahifa render'ini kechiktirmaydi.</li>
+<li><strong>Parallel ma'lumot olish:</strong> barcha jadvallar (<code>profiles</code>, <code>marketing_daily</code>, <code>plan_settings</code>, <code>employee_daily</code>, <code>employee_plans</code>) <code>Promise.all</code> orqali bir vaqtda so'raladi.</li>
+<li><strong>Keshni yangilash:</strong> har bir muvaffaqiyatli mutatsiyadan so'ng server harakatida <code>revalidatePath("/")</code> chaqiriladi (login/logout uchun <code>revalidatePath("/", "layout")</code>), shunda faqat kerakli marshrut qayta hisoblanadi.</li>
+</ul>
+<hr>
+<h2 id="5-malumotlar-modeli-malumotlar-bazasi">5. Ma'lumotlar modeli (ma'lumotlar bazasi)</h2>
+<p>RNP Dashboard ma'lumotlari Supabase (PostgreSQL) da <code>public</code> sxemasida saqlanadi. Barcha jadvallar <code>scripts/</code> katalogidagi raqamlangan SQL migratsiya fayllari orqali yaratiladi va o'zgartiriladi. Barcha pul summalari <strong>USD</strong> (dollar) da saqlanadi; oy identifikatorlari <code>'YYYY-MM'</code> matn ko'rinishida (masalan <code>'2026-07'</code>).</p>
+<h3 id="51-jadvallar">5.1. Jadvallar</h3>
+<h4 id="511-profiles-foydalanuvchi-profillari">5.1.1. <code>profiles</code> — foydalanuvchi profillari</h4>
+<p>Supabase Auth (<code>auth.users</code>) foydalanuvchilariga bog'langan. Har bir tizim foydalanuvchisi uchun bitta qator. Manba: <code>scripts/001_init.sql</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td><code>uuid</code></td><td>—</td><td><strong>PRIMARY KEY</strong>, FK → <code>auth.users(id)</code> <strong>ON DELETE CASCADE</strong></td><td>Auth foydalanuvchisi bilan bir xil ID</td></tr>
+<tr><td><code>name</code></td><td><code>text</code></td><td>—</td><td><code>NOT NULL</code></td><td>Foydalanuvchi ismi</td></tr>
+<tr><td><code>login</code></td><td><code>text</code></td><td>—</td><td><code>NOT NULL</code>, <strong>UNIQUE</strong></td><td>Kirish logini (username)</td></tr>
+<tr><td><code>role</code></td><td><code>text</code></td><td><code>'salesperson'</code></td><td><code>NOT NULL</code>, <code>CHECK (role in ('super_admin', 'admin', 'salesperson'))</code></td><td>Rol</td></tr>
+<tr><td><code>created_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td><td>Yaratilgan vaqt</td></tr>
+</tbody></table></div>
+<p>Rollar (<code>lib/rnp.ts</code>, <code>roleLabel()</code>): <code>super_admin</code> → "Bosh admin", <code>admin</code> → "Admin", <code>salesperson</code> → "Sotuvchi". <code>super_admin</code> va <code>admin</code> — menejer rollari (<code>isManagerRole()</code>).</p>
+<p>Login internal email'ga o'giriladi: <code>loginToEmail()</code> → <code>&lt;login&gt;@rnp.local</code> (<code>EMAIL_DOMAIN = "rnp.local"</code>).</p>
+<h4 id="512-marketing_daily-marketing-kunlik-1-jadval">5.1.2. <code>marketing_daily</code> — marketing kunlik (1-jadval)</h4>
+<p>Har oyning har kuni uchun bitta qator. Manba: <code>scripts/001_init.sql</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td><code>uuid</code></td><td><code>gen_random_uuid()</code></td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>month</code></td><td><code>text</code></td><td>—</td><td><code>NOT NULL</code></td><td><code>'YYYY-MM'</code></td></tr>
+<tr><td><code>day</code></td><td><code>int</code></td><td>—</td><td><code>NOT NULL</code>, <code>CHECK (day between 1 and 31)</code></td><td>Oy kuni</td></tr>
+<tr><td><code>byudjet</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Kunlik byudjet (USD)</td></tr>
+<tr><td><code>sifatli</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sifatli lidlar soni</td></tr>
+<tr><td><code>jami_lead</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Jami lidlar soni</td></tr>
+<tr><td><code>sotuv</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sotuvlar soni</td></tr>
+<tr><td><code>updated_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td><td></td></tr>
+<tr><td>—</td><td>—</td><td>—</td><td><strong>UNIQUE (<code>month</code>, <code>day</code>)</strong></td><td>Kun bo'yicha yagonalik</td></tr>
+</tbody></table></div>
+<h4 id="513-plan_settings-reja-sozlamalari">5.1.3. <code>plan_settings</code> — reja sozlamalari</h4>
+<p>Har oy uchun bitta qator; oylik rejalar (KPI maqsadlari). Manba: <code>scripts/001_init.sql</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><code>month</code></td><td><code>text</code></td><td>—</td><td><strong>PRIMARY KEY</strong></td><td><code>'YYYY-MM'</code></td></tr>
+<tr><td><code>plan_byudjet</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Reja byudjet (USD)</td></tr>
+<tr><td><code>plan_lead</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Reja lidlar soni</td></tr>
+<tr><td><code>plan_sotuv</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Reja sotuvlar soni</td></tr>
+<tr><td><code>updated_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td><td></td></tr>
+</tbody></table></div>
+<h4 id="514-employee_daily-hodim-kunlik-natijalari-2-jadval-drill-down">5.1.4. <code>employee_daily</code> — hodim kunlik natijalari (2-jadval, drill-down)</h4>
+<p>Har bir hodim va kun uchun bitta qator. Manba: <code>scripts/001_init.sql</code>, <code>sifatsiz</code> ustuni <code>scripts/005_add_sifatsiz.sql</code> da qo'shilgan.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td><code>uuid</code></td><td><code>gen_random_uuid()</code></td><td><strong>PRIMARY KEY</strong></td><td></td></tr>
+<tr><td><code>employee_id</code></td><td><code>uuid</code></td><td>—</td><td><code>NOT NULL</code>, FK → <code>profiles(id)</code> <strong>ON DELETE CASCADE</strong></td><td>Hodim</td></tr>
+<tr><td><code>month</code></td><td><code>text</code></td><td>—</td><td><code>NOT NULL</code></td><td><code>'YYYY-MM'</code></td></tr>
+<tr><td><code>day</code></td><td><code>int</code></td><td>—</td><td><code>NOT NULL</code>, <code>CHECK (day between 1 and 31)</code></td><td>Oy kuni</td></tr>
+<tr><td><code>gaplashgan</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Gaplashgan mijozlar</td></tr>
+<tr><td><code>sifatli</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sifatli lidlar</td></tr>
+<tr><td><code>sifatsiz</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sifatsiz lidlar (005 da qo'shilgan)</td></tr>
+<tr><td><code>aniqlanmagan</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Aniqlanmagan lidlar</td></tr>
+<tr><td><code>sotilgan_mijoz</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sotilgan mijozlar soni</td></tr>
+<tr><td><code>sotilgan_mahsulot</code></td><td><code>int</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Sotilgan mahsulotlar soni</td></tr>
+<tr><td><code>tushum</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Tushum (USD)</td></tr>
+<tr><td><code>updated_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td><td></td></tr>
+<tr><td>—</td><td>—</td><td>—</td><td><strong>UNIQUE (<code>employee_id</code>, <code>month</code>, <code>day</code>)</strong></td><td>Hodim/kun bo'yicha yagonalik</td></tr>
+</tbody></table></div>
+<p><code>sifatsiz</code> ustuni haqida (005): sotuvchilar endi sifatsiz lidlar sonini bevosita kiritadi; marketing jadvalidagi "Sifatsiz" ustuni shu qiymatdan yig'iladi (ilgari <code>jami_lead − sifatli</code> sifatida hisoblanardi).</p>
+<h4 id="515-employee_plans-hodimning-oylik-tushum-rejasi">5.1.5. <code>employee_plans</code> — hodimning oylik tushum rejasi</h4>
+<p>Har bir hodimga har oy uchun daromad (tushum) rejasi. Manba: <code>scripts/006_employee_plans.sql</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th><th>Izoh</th></tr></thead>
+<tbody>
+<tr><td><code>employee_id</code></td><td><code>uuid</code></td><td>—</td><td><code>NOT NULL</code>, FK → <code>profiles(id)</code> <strong>ON DELETE CASCADE</strong></td><td>Hodim</td></tr>
+<tr><td><code>month</code></td><td><code>text</code></td><td>—</td><td><code>NOT NULL</code></td><td><code>'YYYY-MM'</code></td></tr>
+<tr><td><code>plan_tushum</code></td><td><code>numeric</code></td><td><code>0</code></td><td><code>NOT NULL</code></td><td>Oylik daromad rejasi (USD)</td></tr>
+<tr><td><code>updated_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td><td></td></tr>
+<tr><td>—</td><td>—</td><td>—</td><td><strong>PRIMARY KEY (<code>employee_id</code>, <code>month</code>)</strong></td><td>Hodim/oy bo'yicha kompozit kalit</td></tr>
+</tbody></table></div>
+<p>Bajarilish foizi "Hodimlar natijalari" jadvalida shu hodimning oylik jami <code>tushum</code>iga nisbatan ko'rsatiladi.</p>
+<h4 id="516-_migrations-migratsiya-jurnali-xizmat-jadvali">5.1.6. <code>_migrations</code> — migratsiya jurnali (xizmat jadvali)</h4>
+<p>Idempotentlik uchun qo'llanilgan bir martalik migratsiyalarni belgilaydi. Manba: <code>scripts/003_usd_conversion.sql</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Ustun</th><th>Tip</th><th>Default</th><th>Cheklov</th></tr></thead>
+<tbody>
+<tr><td><code>name</code></td><td><code>text</code></td><td>—</td><td><strong>PRIMARY KEY</strong></td></tr>
+<tr><td><code>applied_at</code></td><td><code>timestamptz</code></td><td><code>now()</code></td><td><code>NOT NULL</code></td></tr>
+</tbody></table></div>
+<h3 id="52-row-level-security-rls-siyosatlari">5.2. Row Level Security (RLS) siyosatlari</h3>
+<p>Quyidagi jadvallarda RLS yoqilgan: <code>profiles</code>, <code>marketing_daily</code>, <code>plan_settings</code>, <code>employee_daily</code>, <code>employee_plans</code> (007 dan keyin <code>rnp_storage</code> ham). Umumiy tamoyil:</p>
+<ul>
+<li><strong>O'qish (SELECT):</strong> barcha autentifikatsiya qilingan foydalanuvchilar (<code>to authenticated using (true)</code>).</li>
+<li><strong>Yozish (INSERT/UPDATE/DELETE):</strong> faqat menejerlar (<code>is_manager()</code>), yagona istisno — <code>employee_daily</code> da qatorning egasi ham o'z ma'lumotini yoza oladi.</li>
+</ul>
+<div class="tw"><table>
+<thead><tr><th>Siyosat nomi</th><th>Jadval</th><th>Amal</th><th><code>USING</code> / <code>WITH CHECK</code></th></tr></thead>
+<tbody>
+<tr><td><code>read profiles</code></td><td><code>profiles</code></td><td>SELECT</td><td><code>true</code></td></tr>
+<tr><td><code>read marketing</code></td><td><code>marketing_daily</code></td><td>SELECT</td><td><code>true</code></td></tr>
+<tr><td><code>read plan</code></td><td><code>plan_settings</code></td><td>SELECT</td><td><code>true</code></td></tr>
+<tr><td><code>read employee_daily</code></td><td><code>employee_daily</code></td><td>SELECT</td><td><code>true</code></td></tr>
+<tr><td><code>read employee_plans</code></td><td><code>employee_plans</code></td><td>SELECT</td><td><code>true</code></td></tr>
+<tr><td><code>write marketing</code></td><td><code>marketing_daily</code></td><td>ALL</td><td><code>public.is_manager()</code></td></tr>
+<tr><td><code>write plan</code></td><td><code>plan_settings</code></td><td>ALL</td><td><code>public.is_manager()</code></td></tr>
+<tr><td><code>write employee_daily</code></td><td><code>employee_daily</code></td><td>ALL</td><td><code>public.is_manager() OR employee_id = auth.uid()</code></td></tr>
+<tr><td><code>write employee_plans</code></td><td><code>employee_plans</code></td><td>ALL</td><td><code>public.is_manager()</code></td></tr>
+</tbody></table></div>
+<p><code>employee_daily</code> yozish siyosati muhim ma'no tashiydi: menejer istalgan hodim qatorini yozadi, sotuvchi esa faqat <strong>o'z</strong> qatorini (<code>employee_id = auth.uid()</code>) yozadi.</p>
+<p><strong>Xavfsizlik konteksti (004):</strong> boshlang'ich <code>001_init.sql</code> da yozish siyosatlari <code>using(true) with check(true)</code> edi — bu har qanday tizimga kirgan foydalanuvchiga (jumladan sotuvchiga) brauzerdagi ochiq anon key orqali byudjet/reja/boshqa hodim ma'lumotlarini o'zgartirishga imkon berardi. <code>004_rls_hardening.sql</code> rol tekshiruvini bazaning o'zida (RLS) <code>is_manager()</code> orqali bajaradigan qilib qattiqlashtirdi. <code>read ...</code> siyosatlari o'zgarmadi.</p>
+<p><strong><code>profiles</code> jadvalida yozish siyosati yo'q:</strong> hodim qo'shish/o'chirish server tomonda <strong>service-role</strong> kaliti bilan bajariladi va RLS'ni butunlay chetlab o'tadi.</p>
+<h4 id="is_manager-funksiyasi"><code>is_manager()</code> funksiyasi</h4>
+<p>Joriy foydalanuvchi menejer (<code>super_admin</code> yoki <code>admin</code>) ekanini aniqlaydi. <code>001_init.sql</code> da yaratilgan, <code>004</code> va <code>006</code> da qayta ta'minlanadi (idempotentlik uchun).</p>
+<pre><code>create or replace function public.is_manager()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('super_admin', 'admin')
+  );
+$$;
+grant execute on function public.is_manager() to authenticated;</code></pre>
+<p>Muhim xususiyatlar:</p>
+<ul>
+<li><strong><code>SECURITY DEFINER</code></strong> — funksiya <code>profiles</code> ni egasi huquqi bilan o'qiydi, shu sababli <code>profiles</code> ustidagi RLS siyosatlariga <strong>rekursiya qilmaydi</strong>.</li>
+<li><strong><code>STABLE</code></strong> va <strong><code>set search_path = public</code></strong> — barqaror va xavfsiz (search_path manipulyatsiyasidan himoyalangan).</li>
+<li><code>authenticated</code> roliga <code>execute</code> grant berilgan.</li>
+</ul>
+<h3 id="53-migratsiyalar-royxati">5.3. Migratsiyalar ro'yxati</h3>
+<p>Migratsiyalar Supabase → SQL Editor da tartib bo'yicha bir marta ishga tushiriladi. Fayllar <code>scripts/</code> katalogida.</p>
+<div class="tw"><table>
+<thead><tr><th>Fayl</th><th>Vazifasi</th></tr></thead>
+<tbody>
+<tr><td><code>001_init.sql</code></td><td>Asosiy sxema: <code>profiles</code>, <code>marketing_daily</code>, <code>plan_settings</code>, <code>employee_daily</code> jadvallari, RLS yoqilishi, o'qish/yozish siyosatlari, <code>is_manager()</code>. Yangi o'rnatish uchun yetarli.</td></tr>
+<tr><td><code>002_roles_migration.sql</code></td><td>Mavjud bazaga uch rolli tizim (<code>super_admin</code>/<code>admin</code>/<code>salesperson</code>) qo'shadi: eski <code>profiles_role_check</code> cheklovini almashtiradi va <code>login = 'admin'</code> hisobni <code>super_admin</code> ga ko'taradi. Yangi o'rnatishda shart emas.</td></tr>
+<tr><td><code>003_usd_conversion.sql</code></td><td>Pul birligini so'mdan USD ga o'tkazadi. <code>_migrations</code> jadvalini yaratadi (idempotentlik). <code>employee_daily.tushum</code> va <code>marketing_daily.byudjet</code> qiymatlarini <code>round(qiymat / rate, 2)</code> bo'yicha aylantiradi (<code>rate</code> — o'sha davrdagi CBU kursi, default <code>11910</code>). Faqat eski so'mli bazada; qayta ishga tushirilsa hech narsa qilmaydi. <code>plan_settings.plan_byudjet</code> aylantirilmaydi (allaqachon $ deb hisoblanadi).</td></tr>
+<tr><td><code>004_rls_hardening.sql</code></td><td>RLS xavfsizligini qattiqlashtiradi: <code>is_manager()</code> ni qayta ta'minlaydi va <code>write marketing</code>, <code>write plan</code>, <code>write employee_daily</code> siyosatlarini rol tekshiruviga o'tkazadi. Idempotent.</td></tr>
+<tr><td><code>005_add_sifatsiz.sql</code></td><td><code>employee_daily</code> ga <code>sifatsiz int not null default 0</code> ustunini qo'shadi (<code>add column if not exists</code>). Idempotent.</td></tr>
+<tr><td><code>006_employee_plans.sql</code></td><td><code>employee_plans</code> jadvalini (kompozit PK), uning RLS'ini (<code>read</code>/<code>write</code>) yaratadi; <code>is_manager()</code> ni ham qayta ta'minlaydi (jonli baza 004 dan oldingi bo'lishi ehtimoliga qarshi). Idempotent.</td></tr>
+<tr><td><code>007_lock_rnp_storage.sql</code></td><td>Eski <code>rnp_storage</code> KV-store jadvalini qulflaydi (5.4-bo'lim). Idempotent.</td></tr>
+</tbody></table></div>
+<h3 id="54-rnp_storage-jadvali-qulflangani-007">5.4. <code>rnp_storage</code> jadvali qulflangani (007)</h3>
+<p><code>rnp_storage</code> — ilovaning eski (relational jadvallardan oldingi) key-value store'i. <strong>Joriy kodda umuman ishlatilmaydi</strong>, lekin unda "public" (hatto anonim foydalanuvchi uchun ham) <code>INSERT</code>/<code>UPDATE</code>/<code>SELECT</code>/<code>DELETE</code> siyosatlari mavjud edi — bu spam/suiiste'mol yo'li hisoblangan.</p>
+<p><code>007_lock_rnp_storage.sql</code> jadval mavjud bo'lsa (<code>pg_tables</code> orqali tekshiradi):</p>
+<ol>
+<li><code>rnp_storage</code> da RLS ni yoqadi (<code>enable row level security</code>);</li>
+<li>Barcha ochiq siyosatlarni o'chiradi: <code>"Allow public read"</code>, <code>"Allow public insert"</code>, <code>"Allow public update"</code>, <code>"Allow public delete"</code>, <code>"Allow public select"</code>.</li>
+</ol>
+<p>Ma'lumotga tegilmaydi; RLS yoqilib, ochiq siyosatlar olib tashlangach jadvalga faqat <strong>service-role</strong> kira oladi. Idempotent.</p>
+<h3 id="55-muhim-numeric-ustunlar-jsonda-string-sifatida-qaytadi">5.5. MUHIM: <code>numeric</code> ustunlar JSON'da STRING sifatida qaytadi</h3>
+<p>Supabase (PostgREST) <code>numeric</code> tipidagi ustunlarni JSON javobida <strong>matn (string)</strong> ko'rinishida qaytaradi (<code>0</code> → <code>"0"</code>), aniqlik yo'qolmasligi uchun. JavaScript'da <code>"0"</code> <strong>truthy</strong> hisoblanadi, shuning uchun bu qiymatlarni hisob-kitobda ishlatishdan oldin <code>Number()</code> bilan koersiya qilish <strong>shart</strong>.</p>
+<p>Bu quyidagi <code>numeric</code> maydonlarga tegishli: <code>marketing_daily.byudjet</code>, <code>plan_settings.plan_byudjet</code> / <code>plan_lead</code> / <code>plan_sotuv</code>, <code>employee_daily.tushum</code>, <code>employee_plans.plan_tushum</code>.</p>
+<p>Kodda (<code>lib/calc.ts</code>) bu aniq hisobga olingan:</p>
+<pre><code>// Supabase returns numeric columns as strings ("0" is truthy!), so coerce first
+const rejaLid    = Number(plan?.plan_lead)    || 0
+const planByudjet = Number(plan?.plan_byudjet) || 0
+const planSotuv   = Number(plan?.plan_sotuv)   || 0
+const jamiByudjet = rows.reduce((s, r) =&gt; s + Number(r.byudjet), 0)
+acc.tushum       += Number(d.tushum)</code></pre>
+<p>Xuddi shu naqsh server action'larda ham qo'llaniladi (<code>app/actions/data.ts</code>): <code>Number(pl?.plan_sotuv) || 0</code>, <code>Number(p.plan_tushum) || 0</code>. <code>lib/rnp.ts</code> dagi TypeScript tiplarda (<code>MarketingDaily.byudjet</code>, <code>EmployeeDaily.tushum</code>, <code>PlanSettings.plan_byudjet</code> va h.k.) bu maydonlar <code>number</code> deb e'lon qilingan bo'lsa-da, ishlash vaqtida (runtime) ular string bo'lib kelishi mumkinligi sababli <code>Number()</code> koersiyasi majburiy.</p>
+<hr>
+<h2 id="6-biznes-mantiq-formulalar-jamlanmasi">6. Biznes-mantiq — formulalar jamlanmasi</h2>
+<p>Barcha hosila ko'rsatkichlar <code>lib/calc.ts</code>'da hisoblanadi. Quyida yagona jadvalda jamlangan (bo'luvchi 0 bo'lsa natija 0 — barcha bo'lishlar himoyalangan; Supabase <code>numeric</code> qiymatlar <code>Number()</code> bilan koersiya qilinadi).</p>
+<h3 id="61-kunlik-malumotlar-marketing">6.1. Kunlik Ma'lumotlar (marketing)</h3>
+<div class="tw"><table>
+<thead><tr><th>Ko'rsatkich</th><th>Formula</th></tr></thead>
+<tbody>
+<tr><td>Jami Lead</td><td>Sifatli + Sifatsiz</td></tr>
+<tr><td>Lead Narxi</td><td>Byudjet ÷ Jami Lead</td></tr>
+<tr><td>Sotuv Narxi</td><td>Byudjet ÷ Sotuv</td></tr>
+<tr><td><strong>Sifat %</strong></td><td>Sifatli ÷ (Sifatli + Sifatsiz) × 100</td></tr>
+<tr><td><strong>Konversiya %</strong></td><td>Sotuv ÷ Sifatli × 100</td></tr>
+<tr><td>Reja Lid</td><td><code>plan_lead</code> (kunlik sifatli lead rejasi)</td></tr>
+<tr><td><strong>Reja %</strong></td><td>Sifatli ÷ Reja Lid × 100</td></tr>
+<tr><td>Byudjet reja % (KPI)</td><td>Jami Byudjet ÷ <code>plan_byudjet</code> × 100</td></tr>
+<tr><td>Sifatli reja % (KPI)</td><td>Jami Sifatli ÷ (<code>plan_lead</code> × oy kunlari) × 100</td></tr>
+<tr><td>Tushum reja % (KPI)</td><td>Jami Tushum ÷ <code>plan_sotuv</code> × 100</td></tr>
+</tbody></table></div>
+<h3 id="62-hodimlar-natijalari">6.2. Hodimlar natijalari</h3>
+<div class="tw"><table>
+<thead><tr><th>Ko'rsatkich</th><th>Formula</th></tr></thead>
+<tbody>
+<tr><td><strong>Sifat %</strong></td><td>Sifatli ÷ (Sifatli + Sifatsiz) × 100</td></tr>
+<tr><td><strong>Konversiya %</strong></td><td>Sotilgan mijoz ÷ Sifatli × 100</td></tr>
+<tr><td>O'rtacha chek</td><td>Tushum ÷ Sotilgan mijoz</td></tr>
+<tr><td><strong>Bajarilishi %</strong></td><td>Tushum ÷ Reja × 100</td></tr>
+</tbody></table></div>
+<h3 id="63-rang-chegaralari-foizlar">6.3. Rang chegaralari (foizlar)</h3>
+<div class="tw"><table>
+<thead><tr><th>Diapazon</th><th>Rang</th><th>Ma'no</th></tr></thead>
+<tbody>
+<tr><td>&lt; 30%</td><td>🔴 qizil</td><td>past</td></tr>
+<tr><td>30–60%</td><td>🟡 sariq</td><td>o'rta</td></tr>
+<tr><td>≥ 60%</td><td>🟢 yashil</td><td>yuqori</td></tr>
+</tbody></table></div>
+<p>Bajarilishi ustuni uchun maxsus chegara: <strong>≥ 100% — yashil</strong>, <strong>≥ 50% — sariq</strong>, past — qizil.</p>
+<h2 id="7-nofunksional-talablar">7. Nofunksional talablar</h2>
+<h3 id="71-xavfsizlik">7.1. Xavfsizlik</h3>
+<p><strong>Ikki qatlamli avtorizatsiya (server action + RLS):</strong> har bir yozish operatsiyasi ham server harakatida rol bo'yicha, ham ma'lumotlar bazasi darajasida (Row Level Security) tekshiriladi.</p>
+<p><strong>Rollar (<code>lib/rnp.ts</code> — <code>Role</code>):</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Rol</th><th>Yorlig'i (<code>roleLabel</code>)</th><th>Ruxsatlar</th></tr></thead>
+<tbody>
+<tr><td><code>super_admin</code></td><td>Bosh admin</td><td>To'liq boshqaruv; adminlarni ham qo'sha/o'zgartira/o'chira oladi</td></tr>
+<tr><td><code>admin</code></td><td>Admin</td><td>Dashboard va ma'lumotlarni boshqaradi; faqat sotuvchilarni boshqaradi</td></tr>
+<tr><td><code>salesperson</code></td><td>Sotuvchi</td><td>Faqat o'z kunlik natijalarini kirita oladi</td></tr>
+</tbody></table></div>
+<p><code>isManagerRole(role)</code> — <code>super_admin</code> yoki <code>admin</code> bo'lsa <code>true</code> qaytaradi (menejer = to'liq ko'rish + ma'lumot boshqarish).</p>
+<p><strong>Server harakatlaridagi tekshiruvlar (<code>app/actions/data.ts</code>):</strong></p>
+<ul>
+<li><code>requireManager()</code> — menejer bo'lmasa <strong>"Ruxsat yo'q"</strong> qaytaradi.</li>
+<li>Xodim yaratish/o'zgartirish/o'chirishda plain <code>admin</code> faqat sotuvchilar bilan ishlay oladi; menejer rollarini faqat <code>super_admin</code> boshqaradi. Foydalanuvchi o'zini o'chira olmaydi (<strong>"O'zingizni o'chira olmaysiz"</strong>).</li>
+<li><code>upsertEmployeeDay</code> — menejer bo'lmasa faqat <code>profile.id === input.employee_id</code> bo'lsa yozadi (aks holda <strong>"Faqat o'z natijalaringizni kirita olasiz"</strong>).</li>
+</ul>
+<p><strong>RLS mustahkamlash (<code>scripts/004_rls_hardening.sql</code>):</strong> brauzerdagi ochiq anon key orqali to'g'ridan-to'g'ri yozishning oldini oladi. <code>public.is_manager()</code> funksiyasi (<code>SECURITY DEFINER</code>, <code>stable</code>, <code>set search_path = public</code>) joriy foydalanuvchi menejer ekanini bazaning o'zida aniqlaydi. Yozish siyosatlari:</p>
+<ul>
+<li><code>marketing_daily</code> ("write marketing") — faqat <code>is_manager()</code>.</li>
+<li><code>plan_settings</code> ("write plan") — faqat <code>is_manager()</code>.</li>
+<li><code>employee_daily</code> ("write employee_daily") — <code>is_manager()</code> <strong>yoki</strong> <code>employee_id = auth.uid()</code> (qatorning egasi).</li>
+<li>O'qish (SELECT, <code>using(true)</code>) siyosatlari o'zgarmaydi — tizimga kirgan barcha foydalanuvchilar o'qiy oladi.</li>
+</ul>
+<p><strong>Eski jadvalni qulflash (<code>scripts/007_lock_rnp_storage.sql</code>):</strong> ilovaning eski KV-store'i <code>rnp_storage</code>da RLS yoqilib, barcha ochiq (anonim) <code>INSERT/UPDATE/SELECT/DELETE</code> siyosatlari olib tashlanadi — endi faqat service-role kira oladi. Skript idempotent.</p>
+<p><strong>Service-role faqat serverda:</strong> <code>createServiceClient()</code> (<code>lib/supabase/admin.ts</code>) <code>SUPABASE_SERVICE_ROLE_KEY</code> bilan faqat server harakatlarida ishlatiladi (auth foydalanuvchilarini yaratish/o'chirish uchun). Faylda aniq ogohlantirish: <strong>"NEVER import this into client components."</strong> Klient (<code>client.ts</code>), server (<code>server.ts</code>) va proxy (<code>proxy.ts</code>) klientlari faqat <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> ishlatadi.</p>
+<p><strong>Seed-adminning env-gated bo'lishi (<code>app/actions/auth.ts</code> — <code>ensureSeedAdmin</code>):</strong> birinchi super-adminni yaratish faqat <code>SEED_ADMIN_LOGIN</code> va <code>SEED_ADMIN_PASSWORD</code> (kamida 8 belgi) server-side env o'zgaruvchilari o'rnatilganda ishlaydi. Kredensiallar hech qachon kodda qattiq yozilmaydi. Agar biror menejer allaqachon mavjud bo'lsa, hech narsa qilmaydi — ochiq marshrut hech qachon ma'lum standart hisob yarata olmaydi.</p>
+<p><strong>Kirish validatsiyasi:</strong> server harakatlarida oy <code>^\d{4}-\d{2}$</code> (<code>isValidMonth</code>), kun <code>1..daysInMonth(month)</code> oralig'ida, barcha son qiymatlari <code>Number.isFinite</code> va <code>&gt;= 0</code> (manfiy emas) tekshiriladi. Parol kamida 6 belgi. Hodim rejalari yig'indisi oylik "Reja Tushum"dan oshmasligi tekshiriladi (fail-closed: oylik rejani o'qib bo'lmasa operatsiya rad etiladi).</p>
+<p><strong>Sessiya himoyasi (<code>middleware.ts</code> + <code>lib/supabase/proxy.ts</code>):</strong> har bir so'rovda <code>updateSession</code> sessiyani yangilaydi; tizimga kirmagan foydalanuvchi <code>/login</code>ga, kirgan foydalanuvchi login sahifasidan <code>/</code>ga yo'naltiriladi.</p>
+<h3 id="72-responsivlik-mobil-moslashuv">7.2. Responsivlik (mobil moslashuv)</h3>
+<ul>
+<li><strong>Gorizontal skroll bilan jadvallar:</strong> keng jadvallar <code>overflow-x-auto</code> konteyner ichida joylashadi (<code>marketing-table.tsx</code>, <code>employee-results.tsx</code>, <code>components/ui/table.tsx</code>), shunda mobil ekranda sahifaning o'zi gorizontal skroll bo'lmaydi.</li>
+<li><strong>"Sticky" (yopishqoq) birinchi ustun:</strong> davr/hodim ustuni <code>sticky left-0 z-10 bg-inherit</code> bilan chapda qotib turadi — foydalanuvchi jadvalni gorizontal aylantirganda ham qator identifikatori ko'rinib turadi. Jami/Umumiy jami qatorlari ham yopishqoq.</li>
+<li><strong>Moslashuvchan setkalar:</strong> KPI kartalari <code>grid-cols-2 lg:grid-cols-4</code>; kartalarda uzun pul qiymati mobilda kichikroq shrift bilan o'raladi (<code>sm:truncate sm:text-2xl</code>), to'liq matn <code>title</code> orqali doim ochiladi.</li>
+<li><strong>Header:</strong> <code>flex-wrap</code> bilan tor ekranda o'raladi; eksport tugmasi matni mobilda yashiriladi (<code>hidden sm:inline</code>), tablar konteyneri mobilda yashirin skrollbar bilan gorizontal aylanadi.</li>
+</ul>
+<h3 id="73-xalqarolashtirish-i18n">7.3. Xalqarolashtirish (i18n)</h3>
+<ul>
+<li>Butun interfeys <strong>o'zbek tilida (lotin)</strong>. <code>&lt;html lang="uz"&gt;</code> (<code>app/layout.tsx</code>).</li>
+<li>Oy nomlari <code>MONTH_NAMES_UZ</code> massivi (Yanvar…Dekabr) orqali (<code>lib/rnp.ts</code>); <code>monthLabel</code>, <code>monthShortLabel</code>, <code>monthNamesUz</code> yordamchilari.</li>
+<li>Rol yorliqlari o'zbekcha (<code>roleLabel</code>): Bosh admin / Admin / Sotuvchi.</li>
+<li>Barcha tugma, dialog, toast va xatolik matnlari o'zbekcha (masalan "Saqlash", "Bekor qilish", "Eksport", "Ruxsat yo'q").</li>
+<li>Sonlar <code>Intl.NumberFormat</code> bilan formatlanadi: umumiy sonlar <code>ru-RU</code> (mingliklar ajratkichi bilan, <code>fmt</code>), USD qiymatlari <code>en-US</code> (<code>fmtUsd</code>, <code>fmtUsdPlain</code>).</li>
+</ul>
+<h3 id="74-brauzer-talablari">7.4. Brauzer talablari</h3>
+<ul>
+<li>Zamonaviy brauzerlar: <strong>OKLCH</strong> rang formatini va CSS <code>color-mix(in oklch, ...)</code> funksiyasini qo'llab-quvvatlaydigan (Chrome/Edge, Safari, Firefox joriy versiyalari).</li>
+<li>CSS <code>sticky</code> pozitsiyalash, <code>backdrop-blur</code>, moslashuvchan <code>grid</code>/<code>flex</code> va <code>prefers-color-scheme</code> media-so'rovi talab qilinadi (favicon yorug'/qorong'i variantlari, mavzu rangi shunga bog'liq).</li>
+<li>JavaScript yoqilgan bo'lishi shart (interaktiv React 19 klient komponentlari, dialoglar, tanlagichlar).</li>
+</ul>
+<h3 id="75-ishlash-performance">7.5. Ishlash (performance)</h3>
+<ul>
+<li><strong><code>revalidatePath</code>:</strong> har bir muvaffaqiyatli mutatsiyadan keyin faqat kerakli marshrut (<code>/</code>) qayta hisoblanadi — butun ilova emas.</li>
+<li><strong>Non-bloking CBU fetch:</strong> <code>getUsdRate()</code> DB so'rovlaridan oldin boshlanib parallel bajariladi, ~3 soniya timeout va sutkalik kesh (<code>revalidate: 86400</code>) bilan — sekin/erishib bo'lmaydigan cbu.uz sahifa render'ini bloklamaydi.</li>
+<li><strong>Parallel DB so'rovlari:</strong> barcha jadval so'rovlari <code>Promise.all</code> orqali bir vaqtda.</li>
+<li><strong>Optimistik UI:</strong> <code>useOptimistic</code> + <code>useTransition</code> bilan kiritilgan ma'lumot serverdan javob kutmasdan darhol ko'rsatiladi.</li>
+<li><strong>Instant yuklanish skeleti:</strong> <code>app/loading.tsx</code> davr almashtirishda oq ekran o'rniga darhol vizual javob beradi.</li>
+<li><strong>Statik ranglar va shriftlar:</strong> Geist/Geist Mono shriftlari <code>next/font/google</code> orqali (subset: latin), mavzu almashuvida o'tish animatsiyalari o'chirilgan (<code>disableTransitionOnChange</code>).</li>
+</ul>
+<hr>
+<p>Tegishli fayllar (mutlaq yo'llar):</p>
+<ul>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/plan-settings-dialog.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/export.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/cbu.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/rnp.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/period-picker.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/components/theme-toggle.tsx</code>, <code>theme-provider.tsx</code>, <code>kpi-card.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/app/loading.tsx</code>, <code>app/globals.css</code>, <code>app/layout.tsx</code>, <code>app/page.tsx</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/app/actions/data.ts</code>, <code>app/actions/auth.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/lib/supabase/{admin,server,client,proxy}.ts</code>, <code>lib/auth.ts</code></li>
+<li><code>/Users/m2air/Desktop/RNP/Intouch/scripts/004_rls_hardening.sql</code>, <code>scripts/007_lock_rnp_storage.sql</code></li>
+</ul>
+<hr>
+<h2 id="8-lugat">8. Lug'at</h2>
+<div class="tw"><table>
+<thead><tr><th>Atama</th><th>Ma'nosi</th></tr></thead>
+<tbody>
+<tr><td><strong>Lead</strong></td><td>Potensial mijoz (murojaat)</td></tr>
+<tr><td><strong>Sifatli lead</strong></td><td>Talabga javob beradigan, ishlashga arziydigan lead</td></tr>
+<tr><td><strong>Sifatsiz lead</strong></td><td>Talabga javob bermaydigan lead</td></tr>
+<tr><td><strong>Aniqlanmagan</strong></td><td>Holati hali belgilanmagan murojaat</td></tr>
+<tr><td><strong>Jami Lead</strong></td><td>Sifatli + Sifatsiz</td></tr>
+<tr><td><strong>Sotuv / Sotilgan mijoz</strong></td><td>Sotib olgan mijoz soni</td></tr>
+<tr><td><strong>Sotilgan mahsulot</strong></td><td>Sotilgan mahsulot/xizmat birligi soni</td></tr>
+<tr><td><strong>Tushum</strong></td><td>Daromad (USD)</td></tr>
+<tr><td><strong>Byudjet</strong></td><td>Marketingga sarflangan mablag' (USD)</td></tr>
+<tr><td><strong>Lead Narxi (CPL)</strong></td><td>Bitta lead narxi = Byudjet ÷ Jami Lead</td></tr>
+<tr><td><strong>Sotuv Narxi (CPA)</strong></td><td>Bitta sotuv narxi = Byudjet ÷ Sotuv</td></tr>
+<tr><td><strong>Sifat %</strong></td><td>Lead sifati: sifatli ÷ jami klassifikatsiyalangan</td></tr>
+<tr><td><strong>Konversiya %</strong></td><td>Sotuvga aylanish darajasi</td></tr>
+<tr><td><strong>O'rtacha chek</strong></td><td>Bitta mijozdan o'rtacha tushum</td></tr>
+<tr><td><strong>Reja Lid</strong></td><td>Kunlik sifatli lead maqsadi (<code>plan_lead</code>)</td></tr>
+<tr><td><strong>Reja Tushum</strong></td><td>Oylik daromad maqsadi (<code>plan_sotuv</code>)</td></tr>
+<tr><td><strong>Bajarilishi %</strong></td><td>Rejaning bajarilgan ulushi</td></tr>
+<tr><td><strong>MB kursi (CBU)</strong></td><td>Markaziy Bank valyuta kursi (so'm → USD)</td></tr>
+<tr><td><strong>RLS</strong></td><td>Row Level Security — ma'lumotlar bazasi darajasidagi kirish nazorati</td></tr>
+<tr><td><strong>Menejer</strong></td><td><code>super_admin</code> (Bosh admin) yoki <code>admin</code> (Admin)</td></tr>
+</tbody></table></div>
+<hr>
+<p><em>Ushbu hujjat loyihaning haqiqiy kod bazasidan (github.com/Islomkurbonovv/Intouch) avtomatik ravishda tuzilgan va joriy holatni aks ettiradi.</em></p>
+
+    </main>
+  </div>
+</div>
