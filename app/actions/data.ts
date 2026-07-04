@@ -232,6 +232,28 @@ export async function upsertEmployeePlans(input: {
     }
   }
 
+  const supabase = await createClient()
+
+  // The employee plans are a distribution of the monthly revenue target
+  // (plan_settings.plan_sotuv = "Reja Tushum"). Their sum must not exceed it.
+  const { data: pl, error: planErr } = await supabase
+    .from("plan_settings")
+    .select("plan_sotuv")
+    .eq("month", input.month)
+    .maybeSingle()
+  // Fail closed: if we can't read the monthly target, don't silently skip the
+  // over-limit check (that would let the sum exceed the plan on a read glitch).
+  if (planErr) return { error: "Oylik rejani tekshirib bo'lmadi, qayta urinib ko'ring" }
+  const monthlyTarget = Number((pl as { plan_sotuv?: number } | null)?.plan_sotuv) || 0
+  if (monthlyTarget > 0) {
+    const allocated = input.plans.reduce((s, p) => s + (Number(p.plan_tushum) || 0), 0)
+    if (allocated > monthlyTarget) {
+      return {
+        error: `Hodimlar rejalari yig'indisi (${allocated}) oylik "Reja Tushum" (${monthlyTarget}) dan oshib ketdi`,
+      }
+    }
+  }
+
   const now = new Date().toISOString()
   const rows = input.plans.map((p) => ({
     employee_id: p.employee_id,
@@ -240,7 +262,6 @@ export async function upsertEmployeePlans(input: {
     updated_at: now,
   }))
 
-  const supabase = await createClient()
   const { error } = await supabase
     .from("employee_plans")
     .upsert(rows, { onConflict: "employee_id,month" })

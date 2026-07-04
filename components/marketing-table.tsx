@@ -232,18 +232,18 @@ export function MarketingTable({
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="sticky left-0 z-10 bg-muted/50">{periodHeader}</TableHead>
-                <TableHead className="text-right">Byudjet</TableHead>
-                <TableHead className="text-right">Sifatli</TableHead>
-                <TableHead className="text-right">Sifatsiz</TableHead>
-                <TableHead className="text-right">Jami Lead</TableHead>
-                <TableHead className="text-right">Sotuv</TableHead>
-                <TableHead className="text-right">Lead Narxi</TableHead>
-                <TableHead className="text-right">Sotuv Narxi</TableHead>
-                <TableHead className="text-right">Sifat %</TableHead>
-                <TableHead className="text-right">Konversiya %</TableHead>
-                <TableHead className="text-right">Reja Lid</TableHead>
-                <TableHead className="text-right">Reja %</TableHead>
-                {canEdit ? <TableHead className="text-right">Amal</TableHead> : null}
+                <TableHead className="text-center">Byudjet</TableHead>
+                <TableHead className="text-center">Jami Lead</TableHead>
+                <TableHead className="text-center">Sifatli</TableHead>
+                <TableHead className="text-center">Sifatsiz</TableHead>
+                <TableHead className="text-center">Sotuv</TableHead>
+                <TableHead className="text-center">Lead Narxi</TableHead>
+                <TableHead className="text-center">Sotuv Narxi</TableHead>
+                <TableHead className="text-center">Sifat %</TableHead>
+                <TableHead className="text-center">Konversiya %</TableHead>
+                <TableHead className="text-center">Reja Lid</TableHead>
+                <TableHead className="text-center">Reja %</TableHead>
+                {canEdit ? <TableHead className="text-center">Amal</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,14 +259,14 @@ export function MarketingTable({
                         {period.label}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="flex flex-col items-center gap-1">
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
                               inputMode="decimal"
                               value={draftByudjet}
                               onChange={(e) => setDraftByudjet(e.target.value)}
-                              className="h-8 w-24 text-right"
+                              className="h-8 w-24 text-center"
                               aria-label={draftCurrency === "UZS" ? "Byudjet (so'm)" : "Byudjet ($)"}
                               autoFocus
                             />
@@ -279,15 +279,15 @@ export function MarketingTable({
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sifatli)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(d.sifatsiz)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.jami_lead)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sotuv)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground" colSpan={6}>
+                      <TableCell className="text-center tabular-nums text-muted-foreground">{fmt(row.jami_lead)}</TableCell>
+                      <TableCell className="text-center tabular-nums text-muted-foreground">{fmt(row.sifatli)}</TableCell>
+                      <TableCell className="text-center tabular-nums text-muted-foreground">{fmt(d.sifatsiz)}</TableCell>
+                      <TableCell className="text-center tabular-nums text-muted-foreground">{fmt(row.sotuv)}</TableCell>
+                      <TableCell className="text-center text-muted-foreground" colSpan={6}>
                         Avto-hisob
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-1">
                           <Button size="icon" className="h-8 w-8" onClick={() => save(row.day, period.key)} disabled={pending} aria-label="Saqlash">
                             <Check className="h-4 w-4" />
                           </Button>
@@ -303,19 +303,19 @@ export function MarketingTable({
                 return (
                   <TableRow key={period.key} className={`bg-card hover:bg-muted ${hasData ? "" : "text-muted-foreground"}`}>
                     <TableCell className="sticky left-0 z-10 bg-inherit font-medium">{period.label}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(row.byudjet)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(row.sifatli)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(d.sifatsiz)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(row.jami_lead)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmt(row.sotuv)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.leadNarxi)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.sotuvNarxi)}</TableCell>
-                    <TableCell className="text-right"><PctBadge value={d.sifatPct} /></TableCell>
-                    <TableCell className="text-right"><PctBadge value={d.konversiyaPct} /></TableCell>
-                    <TableCell className="text-right tabular-nums">{plan ? fmt(d.rejaLid) : "—"}</TableCell>
-                    <TableCell className="text-right">{plan ? <PctBadge value={d.rejaPct} /> : "—"}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmtUsd(row.byudjet)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmt(row.jami_lead)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmt(row.sifatli)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmt(d.sifatsiz)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmt(row.sotuv)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmtUsd(d.leadNarxi)}</TableCell>
+                    <TableCell className="text-center tabular-nums">{fmtUsd(d.sotuvNarxi)}</TableCell>
+                    <TableCell className="text-center"><PctBadge value={d.sifatPct} /></TableCell>
+                    <TableCell className="text-center"><PctBadge value={d.konversiyaPct} /></TableCell>
+                    <TableCell className="text-center tabular-nums">{plan ? fmt(d.rejaLid) : "—"}</TableCell>
+                    <TableCell className="text-center">{plan ? <PctBadge value={d.rejaPct} /> : "—"}</TableCell>
                     {canEdit ? (
-                      <TableCell className="text-right">
+                      <TableCell className="text-center">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(period.key)} aria-label={`${period.label} byudjetini tahrirlash`}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -328,17 +328,17 @@ export function MarketingTable({
               {/* Totals row */}
               <TableRow className="border-t-2 bg-muted font-semibold hover:bg-muted">
                 <TableCell className="sticky left-0 z-10 bg-inherit">Jami</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.jamiByudjet)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiSifatsiz)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiLead)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortLeadNarxi)}</TableCell>
-                <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortSotuvNarxi)}</TableCell>
-                <TableCell className="text-right"><PctBadge value={totals.sifatPct} /></TableCell>
-                <TableCell className="text-right"><PctBadge value={totals.konversiyaPct} /></TableCell>
-                <TableCell className="text-right tabular-nums">{plan ? fmt(totals.rejaLid) : "—"}</TableCell>
-                <TableCell className="text-right">{plan ? <PctBadge value={totals.rejaBajarilishi} /> : "—"}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmtUsd(totals.jamiByudjet)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmt(totals.jamiLead)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmt(totals.jamiSifatli)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmt(totals.jamiSifatsiz)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmt(totals.jamiSotuv)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmtUsd(totals.ortLeadNarxi)}</TableCell>
+                <TableCell className="text-center tabular-nums">{fmtUsd(totals.ortSotuvNarxi)}</TableCell>
+                <TableCell className="text-center"><PctBadge value={totals.sifatPct} /></TableCell>
+                <TableCell className="text-center"><PctBadge value={totals.konversiyaPct} /></TableCell>
+                <TableCell className="text-center tabular-nums">{plan ? fmt(totals.rejaLid) : "—"}</TableCell>
+                <TableCell className="text-center">{plan ? <PctBadge value={totals.rejaBajarilishi} /> : "—"}</TableCell>
                 {canEdit ? <TableCell /> : null}
               </TableRow>
             </TableBody>

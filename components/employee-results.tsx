@@ -340,17 +340,17 @@ export function EmployeeResults({
               <TableRow className="bg-muted/50">
                 <TableHead className="w-8" />
                 <TableHead className="sticky left-0 z-10 bg-muted/50">Hodim</TableHead>
-                <TableHead className="text-right">Sifatli</TableHead>
-                <TableHead className="text-right">Sifatsiz</TableHead>
-                <TableHead className="text-right">Aniqlanmagan</TableHead>
-                <TableHead className="text-right">Sotilgan mijoz</TableHead>
-                <TableHead className="text-right">Sotilgan mahsulot</TableHead>
-                <TableHead className="text-right">Tushum</TableHead>
-                <TableHead className="text-right">Reja</TableHead>
-                <TableHead className="text-right">Bajarilishi</TableHead>
-                <TableHead className="text-right">Sifat %</TableHead>
-                <TableHead className="text-right">Konversiya %</TableHead>
-                <TableHead className="text-right">O&apos;rtacha chek</TableHead>
+                <TableHead className="text-center">Sifatli</TableHead>
+                <TableHead className="text-center">Sifatsiz</TableHead>
+                <TableHead className="text-center">Aniqlanmagan</TableHead>
+                <TableHead className="text-center">Sotilgan mijoz</TableHead>
+                <TableHead className="text-center">Sotilgan mahsulot</TableHead>
+                <TableHead className="text-center">Tushum</TableHead>
+                <TableHead className="text-center">Reja</TableHead>
+                <TableHead className="text-center">Bajarilishi</TableHead>
+                <TableHead className="text-center">Sifat %</TableHead>
+                <TableHead className="text-center">Konversiya %</TableHead>
+                <TableHead className="text-center">O&apos;rtacha chek</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -385,19 +385,19 @@ export function EmployeeResults({
                           {emp.name}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.sifatli)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.sifatsiz)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtUsdPlain(agg.tushum)}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {plan ? fmtUsdPlain(plan) : <span className="text-muted-foreground">—</span>}
+                      <TableCell className="text-center tabular-nums">{fmt(agg.sifatli)}</TableCell>
+                      <TableCell className="text-center tabular-nums">{fmt(agg.sifatsiz)}</TableCell>
+                      <TableCell className="text-center tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
+                      <TableCell className="text-center tabular-nums">{fmt(agg.sotilgan_mijoz)}</TableCell>
+                      <TableCell className="text-center tabular-nums">{fmt(agg.sotilgan_mahsulot)}</TableCell>
+                      <TableCell className="text-center tabular-nums">{fmtUsd(agg.tushum)}</TableCell>
+                      <TableCell className="text-center tabular-nums">
+                        {plan ? fmtUsd(plan) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="text-right"><PlanBadge done={agg.tushum} plan={plan} /></TableCell>
-                      <TableCell className="text-right"><PctBadge value={der.sifatPct} /></TableCell>
-                      <TableCell className="text-right"><PctBadge value={der.konversiyaPct} /></TableCell>
-                      <TableCell className="text-right tabular-nums">{fmtUsdPlain(der.ortachaChek)}</TableCell>
+                      <TableCell className="text-center"><PlanBadge done={agg.tushum} plan={plan} /></TableCell>
+                      <TableCell className="text-center"><PctBadge value={der.sifatPct} /></TableCell>
+                      <TableCell className="text-center"><PctBadge value={der.konversiyaPct} /></TableCell>
+                      <TableCell className="text-center tabular-nums">{fmtUsd(der.ortachaChek)}</TableCell>
                     </TableRow>
 
                     {isOpen ? (
@@ -412,13 +412,13 @@ export function EmployeeResults({
                                 <TableHeader>
                                   <TableRow className="bg-muted/40">
                                     <TableHead className="w-16">{periodHeader}</TableHead>
-                                    <TableHead className="text-right">Sifatli</TableHead>
-                                    <TableHead className="text-right">Sifatsiz</TableHead>
-                                    <TableHead className="text-right">Aniqlanmagan</TableHead>
-                                    <TableHead className="text-right">Sotilgan mijoz</TableHead>
-                                    <TableHead className="text-right">Sotilgan mahsulot</TableHead>
-                                    <TableHead className="text-right">Tushum</TableHead>
-                                    {editable ? <TableHead className="text-right">Amal</TableHead> : null}
+                                    <TableHead className="text-center">Sifatli</TableHead>
+                                    <TableHead className="text-center">Sifatsiz</TableHead>
+                                    <TableHead className="text-center">Aniqlanmagan</TableHead>
+                                    <TableHead className="text-center">Sotilgan mijoz</TableHead>
+                                    <TableHead className="text-center">Sotilgan mahsulot</TableHead>
+                                    <TableHead className="text-center">Tushum</TableHead>
+                                    {editable ? <TableHead className="text-center">Amal</TableHead> : null}
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -429,14 +429,14 @@ export function EmployeeResults({
                                     return (
                                       <TableRow key={period.key} className={has ? "" : "text-muted-foreground"}>
                                         <TableCell className="font-medium">{period.label}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatli)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatsiz)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mijoz)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.sotilgan_mahsulot)}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmtUsdPlain(pAgg.tushum)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmt(pAgg.sifatli)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmt(pAgg.sifatsiz)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmt(pAgg.sotilgan_mijoz)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmt(pAgg.sotilgan_mahsulot)}</TableCell>
+                                        <TableCell className="text-center tabular-nums">{fmtUsd(pAgg.tushum)}</TableCell>
                                         {editable ? (
-                                          <TableCell className="text-right">
+                                          <TableCell className="text-center">
                                             <Button
                                               size="icon"
                                               variant="ghost"
@@ -474,19 +474,19 @@ export function EmployeeResults({
                 <TableRow className="border-t-2 bg-muted font-semibold hover:bg-muted">
                   <TableCell className="w-8" />
                   <TableCell className="sticky left-0 z-10 bg-inherit">Umumiy jami</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.sifatli)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.sifatsiz)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.tushum)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {totalsPlan ? fmtUsdPlain(totalsPlan) : <span className="text-muted-foreground">—</span>}
+                  <TableCell className="text-center tabular-nums">{fmt(totals.sifatli)}</TableCell>
+                  <TableCell className="text-center tabular-nums">{fmt(totals.sifatsiz)}</TableCell>
+                  <TableCell className="text-center tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
+                  <TableCell className="text-center tabular-nums">{fmt(totals.sotilgan_mijoz)}</TableCell>
+                  <TableCell className="text-center tabular-nums">{fmt(totals.sotilgan_mahsulot)}</TableCell>
+                  <TableCell className="text-center tabular-nums">{fmtUsd(totals.tushum)}</TableCell>
+                  <TableCell className="text-center tabular-nums">
+                    {totalsPlan ? fmtUsd(totalsPlan) : <span className="text-muted-foreground">—</span>}
                   </TableCell>
-                  <TableCell className="text-right"><PlanBadge done={totals.tushum} plan={totalsPlan} /></TableCell>
-                  <TableCell className="text-right"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
-                  <TableCell className="text-right"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtUsdPlain(totalsDerived.ortachaChek)}</TableCell>
+                  <TableCell className="text-center"><PlanBadge done={totals.tushum} plan={totalsPlan} /></TableCell>
+                  <TableCell className="text-center"><PctBadge value={totalsDerived.sifatPct} /></TableCell>
+                  <TableCell className="text-center"><PctBadge value={totalsDerived.konversiyaPct} /></TableCell>
+                  <TableCell className="text-center tabular-nums">{fmtUsd(totalsDerived.ortachaChek)}</TableCell>
                 </TableRow>
               ) : null}
             </TableBody>

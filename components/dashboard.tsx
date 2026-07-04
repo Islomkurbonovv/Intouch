@@ -147,7 +147,7 @@ export function Dashboard({
             ) : null}
 
             {isManager && tab === "employees" && !isYearly ? (
-              <EmployeePlansDialog month={month} employees={salespeople} plans={employeePlans}>
+              <EmployeePlansDialog month={month} employees={salespeople} plans={employeePlans} plan={plan}>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Target className="h-4 w-4" aria-hidden="true" />
                   Hodim rejalari
