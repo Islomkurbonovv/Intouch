@@ -98,14 +98,17 @@ export function PlanSettingsDialog({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="plan_lead">Reja Lead (lidlar soni)</Label>
+            <Label htmlFor="plan_lead">Kunlik sifatli lead rejasi</Label>
             <Input
               id="plan_lead"
               type="number"
               value={values.plan_lead}
               onChange={(e) => setValues({ ...values, plan_lead: e.target.value })}
-              placeholder="0"
+              placeholder="masalan: 15"
             />
+            <p className="text-xs text-muted-foreground">
+              Bir kunda nechta sifatli lead kerakligi. &quot;Reja Lid&quot; va &quot;Sifat %&quot; shu songa nisbatan hisoblanadi.
+            </p>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="plan_sotuv">Reja Tushum ($)</Label>

@@ -135,8 +135,8 @@ export function MarketingTable({
   )
 
   const totals = useMemo(
-    () => marketingTotals(syncedRows.map((s) => s.row), plan, jamiTushum),
-    [syncedRows, plan, jamiTushum],
+    () => marketingTotals(syncedRows.map((s) => s.row), plan, jamiTushum, monthDays),
+    [syncedRows, plan, jamiTushum, monthDays],
   )
 
   function startEdit(key: string) {
@@ -172,7 +172,7 @@ export function MarketingTable({
     })
   }
 
-  const COLS = 12 + (canEdit ? 1 : 0)
+  const COLS = 11 + (canEdit ? 1 : 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -194,11 +194,11 @@ export function MarketingTable({
               hint={`Reja: ${fmtUsd(totals.rejaByudjet)}`}
             />
             <KpiCard
-              label="Lid reja %"
+              label="Sifatli reja %"
               value={`${fmtPct(totals.rejaBajarilishi)}%`}
               icon={ListChecks}
               tone={pctKpiTone(totals.rejaBajarilishi)}
-              hint={`Reja: ${fmt(totals.rejaLid)} lid`}
+              hint={`Kunlik reja: ${fmt(totals.rejaLid)} sifatli`}
             />
             <KpiCard
               label="Tushum reja %"
@@ -241,13 +241,12 @@ export function MarketingTable({
                 <TableHead className="text-right">Sifat %</TableHead>
                 <TableHead className="text-right">Konversiya %</TableHead>
                 <TableHead className="text-right">Reja Lid</TableHead>
-                <TableHead className="text-right">Reja %</TableHead>
                 {canEdit ? <TableHead className="text-right">Amal</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
               {syncedRows.map(({ period, row }) => {
-                const d = marketingRow(row, plan, monthDays)
+                const d = marketingRow(row, plan)
                 const isEditing = editingKey === period.key
                 const hasData = row.byudjet > 0 || row.jami_lead > 0
 
@@ -282,7 +281,7 @@ export function MarketingTable({
                       <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(d.sifatsiz)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.jami_lead)}</TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{fmt(row.sotuv)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground" colSpan={6}>
+                      <TableCell className="text-right text-muted-foreground" colSpan={5}>
                         Avto-hisob
                       </TableCell>
                       <TableCell className="text-right">
@@ -309,10 +308,9 @@ export function MarketingTable({
                     <TableCell className="text-right tabular-nums">{fmt(row.sotuv)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.leadNarxi)}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtUsdPlain(d.sotuvNarxi)}</TableCell>
-                    <TableCell className="text-right"><PctBadge value={d.sifatPct} /></TableCell>
+                    <TableCell className="text-right">{plan ? <PctBadge value={d.sifatPct} /> : "—"}</TableCell>
                     <TableCell className="text-right"><PctBadge value={d.konversiyaPct} /></TableCell>
                     <TableCell className="text-right tabular-nums">{plan ? fmt(d.rejaLid) : "—"}</TableCell>
-                    <TableCell className="text-right">{plan ? <PctBadge value={d.rejaPct} /> : "—"}</TableCell>
                     {canEdit ? (
                       <TableCell className="text-right">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(period.key)} aria-label={`${period.label} byudjetini tahrirlash`}>
@@ -336,7 +334,6 @@ export function MarketingTable({
                 <TableCell className="text-right tabular-nums">{fmtUsdPlain(totals.ortSotuvNarxi)}</TableCell>
                 <TableCell className="text-right tabular-nums" colSpan={2}>—</TableCell>
                 <TableCell className="text-right tabular-nums">{plan ? fmt(totals.rejaLid) : "—"}</TableCell>
-                <TableCell className="text-right">{plan ? <PctBadge value={totals.rejaBajarilishi} /> : "—"}</TableCell>
                 {canEdit ? <TableCell /> : null}
               </TableRow>
             </TableBody>

@@ -2,20 +2,20 @@ import type { MarketingDaily, PlanSettings, EmployeeDaily } from "@/lib/rnp"
 
 // ---- Table 1: marketing daily derived values ----
 
-export function marketingRow(m: MarketingDaily, plan: PlanSettings | null, monthDays: number) {
+export function marketingRow(m: MarketingDaily, plan: PlanSettings | null) {
   // Sifatsiz (unqualified) is now entered by salespeople and synced here.
   const sifatsiz = Math.max(0, m.sifatsiz)
   const leadNarxi = m.jami_lead ? m.byudjet / m.jami_lead : 0
   const sotuvNarxi = m.sotuv ? m.byudjet / m.sotuv : 0
-  const sifatPct = m.jami_lead ? (m.sifatli / m.jami_lead) * 100 : 0
+
+  // plan_lead is the DAILY qualified-lead (sifatli) target.
+  const rejaLid = plan ? plan.plan_lead : 0
+  // Sifat % = actual qualified leads that day ÷ the daily qualified-lead target.
+  const sifatPct = rejaLid ? (m.sifatli / rejaLid) * 100 : 0
+  // Konversiya % = sales ÷ qualified leads.
   const konversiyaPct = m.sifatli ? (m.sotuv / m.sifatli) * 100 : 0
 
-  // Planned leads per day = monthly plan lead spread evenly across days
-  const rejaLid = plan && monthDays ? plan.plan_lead / monthDays : 0
-  // Reja % for the day = actual leads / planned leads for the day
-  const rejaPct = rejaLid ? (m.jami_lead / rejaLid) * 100 : 0
-
-  return { sifatsiz, leadNarxi, sotuvNarxi, sifatPct, konversiyaPct, rejaLid, rejaPct }
+  return { sifatsiz, leadNarxi, sotuvNarxi, sifatPct, konversiyaPct, rejaLid }
 }
 
 export function marketingTotals(
@@ -23,6 +23,8 @@ export function marketingTotals(
   plan: PlanSettings | null,
   // Total revenue (tushum, USD) for the period — aggregated from employee data.
   jamiTushum = 0,
+  // Days in the current month — the daily qualified-lead target is scaled by this.
+  monthDays = 1,
 ) {
   const jamiByudjet = rows.reduce((s, r) => s + Number(r.byudjet), 0)
   const jamiSifatli = rows.reduce((s, r) => s + r.sifatli, 0)
@@ -32,8 +34,9 @@ export function marketingTotals(
   const ortLeadNarxi = jamiLead ? jamiByudjet / jamiLead : 0
   const ortSotuvNarxi = jamiSotuv ? jamiByudjet / jamiSotuv : 0
 
-  // Plan completion = actual / planned target for the month (guarded against 0 target).
-  const rejaBajarilishi = plan && plan.plan_lead ? (jamiLead / plan.plan_lead) * 100 : 0
+  // plan_lead is a DAILY qualified-lead target; the monthly target scales it by days.
+  const oylikSifatliReja = plan ? plan.plan_lead * monthDays : 0
+  const rejaBajarilishi = oylikSifatliReja ? (jamiSifatli / oylikSifatliReja) * 100 : 0
   const rejaByudjetPct = plan && plan.plan_byudjet ? (jamiByudjet / plan.plan_byudjet) * 100 : 0
   // The sales plan (plan_sotuv) is a REVENUE target in USD, compared to Jami Tushum.
   const rejaTushumPct = plan && plan.plan_sotuv ? (jamiTushum / plan.plan_sotuv) * 100 : 0
