@@ -68,7 +68,7 @@ const EMPTY_DRAFT: DayDraft = {
 // Which day/employee is open in the edit dialog.
 type EditTarget = { empId: string; empName: string; periodKey: string; periodLabel: string }
 
-const COLS = 12
+const COLS = 11
 
 // Round to 2 decimals so a converted USD value (e.g. 6717.2362) shows as 6717.24.
 function round2(n: number) {
@@ -272,7 +272,7 @@ export function EmployeeResults({
     <div className="flex flex-col gap-5">
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Jami gaplashgan lid" value={fmt(totals.gaplashgan)} icon={Users} tone="default" />
+        <KpiCard label="Jami lead" value={fmt(totals.sifatli + totals.sifatsiz)} icon={Users} tone="default" />
         <KpiCard label="Jami sotilgan mijoz" value={fmt(totals.sotilgan_mijoz)} icon={ShoppingCart} tone="success" />
         <KpiCard label="Jami tushum" value={fmtUsd(totals.tushum)} icon={DollarSign} tone="primary" />
         <KpiCard label="O'rtacha konversiya %" value={`${fmt(totalsDerived.konversiyaPct)}%`} icon={Percent} tone={pctKpiTone(totalsDerived.konversiyaPct)} />
@@ -292,7 +292,6 @@ export function EmployeeResults({
               <TableRow className="bg-muted/50">
                 <TableHead className="w-8" />
                 <TableHead className="sticky left-0 z-10 bg-muted/50">Hodim</TableHead>
-                <TableHead className="text-right">Gaplashgan</TableHead>
                 <TableHead className="text-right">Sifatli</TableHead>
                 <TableHead className="text-right">Sifatsiz</TableHead>
                 <TableHead className="text-right">Aniqlanmagan</TableHead>
@@ -335,7 +334,6 @@ export function EmployeeResults({
                           {emp.name}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{fmt(agg.gaplashgan)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sifatli)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.sifatsiz)}</TableCell>
                       <TableCell className="text-right tabular-nums">{fmt(agg.aniqlanmagan)}</TableCell>
@@ -359,7 +357,6 @@ export function EmployeeResults({
                                 <TableHeader>
                                   <TableRow className="bg-muted/40">
                                     <TableHead className="w-16">{periodHeader}</TableHead>
-                                    <TableHead className="text-right">Gaplashgan</TableHead>
                                     <TableHead className="text-right">Sifatli</TableHead>
                                     <TableHead className="text-right">Sifatsiz</TableHead>
                                     <TableHead className="text-right">Aniqlanmagan</TableHead>
@@ -372,12 +369,11 @@ export function EmployeeResults({
                                 <TableBody>
                                   {periods.map((period) => {
                                     const pAgg = periodAgg(emp.id, period.key)
-                                    const has = pAgg.gaplashgan > 0 || pAgg.tushum > 0 || pAgg.sotilgan_mijoz > 0
+                                    const has = pAgg.sifatli > 0 || pAgg.sifatsiz > 0 || pAgg.tushum > 0 || pAgg.sotilgan_mijoz > 0
 
                                     return (
                                       <TableRow key={period.key} className={has ? "" : "text-muted-foreground"}>
                                         <TableCell className="font-medium">{period.label}</TableCell>
-                                        <TableCell className="text-right tabular-nums">{fmt(pAgg.gaplashgan)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatli)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.sifatsiz)}</TableCell>
                                         <TableCell className="text-right tabular-nums">{fmt(pAgg.aniqlanmagan)}</TableCell>
@@ -423,7 +419,6 @@ export function EmployeeResults({
                 <TableRow className="border-t-2 bg-muted font-semibold hover:bg-muted">
                   <TableCell className="w-8" />
                   <TableCell className="sticky left-0 z-10 bg-inherit">Umumiy jami</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmt(totals.gaplashgan)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sifatli)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.sifatsiz)}</TableCell>
                   <TableCell className="text-right tabular-nums">{fmt(totals.aniqlanmagan)}</TableCell>
@@ -453,12 +448,11 @@ export function EmployeeResults({
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 py-2">
-            <NumField id="ed-gaplashgan" label="Gaplashgan" value={draft.gaplashgan} onChange={(v) => setDraft({ ...draft, gaplashgan: v })} />
             <NumField id="ed-sifatli" label="Sifatli" value={draft.sifatli} onChange={(v) => setDraft({ ...draft, sifatli: v })} />
             <NumField id="ed-sifatsiz" label="Sifatsiz" value={draft.sifatsiz} onChange={(v) => setDraft({ ...draft, sifatsiz: v })} />
             <NumField id="ed-aniqlanmagan" label="Aniqlanmagan" value={draft.aniqlanmagan} onChange={(v) => setDraft({ ...draft, aniqlanmagan: v })} />
             <NumField id="ed-sotilgan-mijoz" label="Sotilgan mijoz" value={draft.sotilgan_mijoz} onChange={(v) => setDraft({ ...draft, sotilgan_mijoz: v })} />
-            <NumField id="ed-sotilgan-mahsulot" label="Sotilgan mahsulot" value={draft.sotilgan_mahsulot} onChange={(v) => setDraft({ ...draft, sotilgan_mahsulot: v })} />
+            <NumField id="ed-sotilgan-mahsulot" label="Sotilgan mahsulot" value={draft.sotilgan_mahsulot} onChange={(v) => setDraft({ ...draft, sotilgan_mahsulot: v })} className="col-span-2" />
 
             <div className="col-span-2 flex flex-col gap-1.5">
               <Label htmlFor="ed-tushum">Tushum</Label>

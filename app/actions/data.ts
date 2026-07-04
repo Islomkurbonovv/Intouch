@@ -246,9 +246,6 @@ export async function upsertEmployeeDay(input: {
   if (nums.some((n) => !Number.isFinite(n) || n < 0)) {
     return { error: "Qiymatlar manfiy bo'lishi mumkin emas" }
   }
-  if (input.sifatli > input.gaplashgan) {
-    return { error: "Sifatli lidlar gaplashgan lidlardan ko'p bo'lishi mumkin emas" }
-  }
 
   const supabase = await createClient()
   const { error } = await supabase.from("employee_daily").upsert(

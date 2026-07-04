@@ -121,7 +121,8 @@ export function MarketingTable({
         byudjet: byudjetByPeriod.get(p.key) ?? 0,
         sifatli: emp.sifatli,
         sifatsiz: emp.sifatsiz,
-        jami_lead: emp.gaplashgan,
+        // "Jami Lead" = qualified + unqualified (gaplashgan removed).
+        jami_lead: emp.sifatli + emp.sifatsiz,
         sotuv: emp.sotilgan_mijoz,
       }
       return { period: p, row }

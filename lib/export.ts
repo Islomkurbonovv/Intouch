@@ -32,7 +32,6 @@ export function exportWorkbook(opts: {
   const sheet2: (string | number)[][] = [
     [
       "Hodim",
-      "Gaplashgan",
       "Sifatli",
       "Sifatsiz",
       "Aniqlanmagan",
@@ -50,7 +49,6 @@ export function exportWorkbook(opts: {
     const der = employeeDerived(agg)
     sheet2.push([
       emp.name,
-      agg.gaplashgan,
       agg.sifatli,
       agg.sifatsiz,
       agg.aniqlanmagan,
@@ -70,7 +68,6 @@ export function exportWorkbook(opts: {
       "Hodim",
       "Oy",
       "Kun",
-      "Gaplashgan",
       "Sifatli",
       "Sifatsiz",
       "Aniqlanmagan",
@@ -88,7 +85,6 @@ export function exportWorkbook(opts: {
         emp.name,
         monthShortLabel(d.month),
         d.day,
-        d.gaplashgan,
         d.sifatli,
         d.sifatsiz,
         d.aniqlanmagan,

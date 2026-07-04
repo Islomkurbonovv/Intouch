@@ -111,7 +111,9 @@ export function aggregateEmployee(days: EmployeeDaily[]): EmployeeAgg {
 }
 
 export function employeeDerived(a: EmployeeAgg) {
-  const sifatPct = a.gaplashgan ? (a.sifatli / a.gaplashgan) * 100 : 0
+  // Sifat % = quality: qualified ÷ (qualified + unqualified).
+  const klassifikatsiya = a.sifatli + a.sifatsiz
+  const sifatPct = klassifikatsiya ? (a.sifatli / klassifikatsiya) * 100 : 0
   const konversiyaPct = a.sifatli ? (a.sotilgan_mijoz / a.sifatli) * 100 : 0
   const ortachaChek = a.sotilgan_mijoz ? a.tushum / a.sotilgan_mijoz : 0
   return { sifatPct, konversiyaPct, ortachaChek }
