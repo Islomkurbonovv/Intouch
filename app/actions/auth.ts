@@ -6,9 +6,17 @@ import { createClient } from "@/lib/supabase/server"
 import { createServiceClient } from "@/lib/supabase/admin"
 import { loginToEmail } from "@/lib/rnp"
 
-// Ensures a default super-admin exists so the app is usable on first run.
-// Default credentials: login "admin", password "admin12345".
+// Optionally seeds a first super-admin so a brand-new deployment is usable.
+// SECURITY: credentials come ONLY from server-side env vars — never hardcoded.
+// If SEED_ADMIN_LOGIN / SEED_ADMIN_PASSWORD are unset, this is a no-op, so a
+// public route can never auto-create a well-known default account.
 export async function ensureSeedAdmin() {
+  const seedLogin = process.env.SEED_ADMIN_LOGIN?.trim().toLowerCase()
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD
+
+  // No seed configured → do nothing.
+  if (!seedLogin || !seedPassword || seedPassword.length < 8) return
+
   const admin = createServiceClient()
 
   // If any manager (super_admin or admin) already exists, do nothing.
@@ -19,26 +27,24 @@ export async function ensureSeedAdmin() {
 
   if (count && count > 0) return
 
-  const login = "admin"
-  const password = "admin12345"
-  const email = loginToEmail(login)
+  const email = loginToEmail(seedLogin)
 
   const { data: created, error } = await admin.auth.admin.createUser({
     email,
-    password,
+    password: seedPassword,
     email_confirm: true,
-    user_metadata: { name: "Administrator", login },
+    user_metadata: { name: "Administrator", login: seedLogin },
   })
 
   if (error || !created.user) {
-    console.log("[v0] seed admin error:", error?.message)
+    console.log("[seed] admin error:", error?.message)
     return
   }
 
   await admin.from("profiles").insert({
     id: created.user.id,
     name: "Administrator",
-    login,
+    login: seedLogin,
     role: "super_admin",
   })
 }

@@ -91,8 +91,13 @@ export async function updateEmployee(formData: FormData): Promise<Result> {
 
   const svc = createServiceClient()
 
-  // Fetch the target's current role to enforce permissions.
-  const { data: target } = await svc.from("profiles").select("role").eq("id", id).maybeSingle()
+  // Fetch the target's current values to enforce permissions and to be able to
+  // roll the profile row back if the auth update later fails.
+  const { data: target } = await svc
+    .from("profiles")
+    .select("name, login, role")
+    .eq("id", id)
+    .maybeSingle()
   const targetRole = target ? normRole(String(target.role)) : "salesperson"
 
   // A plain admin cannot touch managers, nor promote anyone to a manager role.
@@ -100,6 +105,12 @@ export async function updateEmployee(formData: FormData): Promise<Result> {
     if (targetRole !== "salesperson" || role !== "salesperson") {
       return { error: "Faqat bosh admin adminlarni boshqara oladi" }
     }
+  }
+
+  // Validate the password BEFORE mutating anything, so a too-short password
+  // can't leave the profile changed while the auth record is untouched.
+  if (password && password.length < 6) {
+    return { error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }
   }
 
   const { data: existing } = await svc
@@ -114,12 +125,30 @@ export async function updateEmployee(formData: FormData): Promise<Result> {
   if (pErr) return { error: pErr.message }
 
   const authUpdate: { email: string; password?: string } = { email: loginToEmail(login) }
-  if (password) {
-    if (password.length < 6) return { error: "Parol kamida 6 belgidan iborat bo'lishi kerak" }
-    authUpdate.password = password
-  }
+  if (password) authUpdate.password = password
+
   const { error: aErr } = await svc.auth.admin.updateUserById(id, authUpdate)
-  if (aErr) return { error: aErr.message }
+  if (aErr) {
+    // Roll the profile row back so login (profiles) can't diverge from the auth
+    // email on a partial failure (which would otherwise lock the user out).
+    if (target) {
+      const { error: rbErr } = await svc
+        .from("profiles")
+        .update({
+          name: String(target.name),
+          login: String(target.login),
+          role: normRole(String(target.role)),
+        })
+        .eq("id", id)
+      // Double fault: auth AND the compensating profile rollback both failed —
+      // profile/auth are now diverged. Surface it instead of swallowing it.
+      if (rbErr) {
+        console.error("[updateEmployee] rollback failed:", rbErr.message)
+        return { error: "Yangilashda xatolik — hodim ma'lumotlarini qayta tekshiring" }
+      }
+    }
+    return { error: aErr.message }
+  }
 
   revalidatePath("/")
   return { ok: true }
@@ -192,6 +221,13 @@ export async function upsertPlanSettings(input: {
 }): Promise<Result> {
   const me = await requireManager()
   if (!me) return { error: "Ruxsat yo'q" }
+
+  if (!isValidMonth(input.month)) return { error: "Noto'g'ri oy" }
+  for (const n of [input.plan_byudjet, input.plan_lead, input.plan_sotuv]) {
+    if (!Number.isFinite(n) || n < 0) {
+      return { error: "Qiymatlar manfiy bo'lishi mumkin emas" }
+    }
+  }
 
   const supabase = await createClient()
   const { error } = await supabase.from("plan_settings").upsert(

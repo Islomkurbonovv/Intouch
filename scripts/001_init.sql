@@ -106,8 +106,8 @@ create policy "write employee_daily" on public.employee_daily   for all to authe
   with check (public.is_manager() or employee_id = auth.uid());
 
 -- ============================================================
--- Tayyor. Endi ilovaga /login orqali kiring:
---   Login: admin
---   Parol: admin12345
--- (birinchi ochilishда avtomatik yaratiladi — keyin parolni almashtiring)
+-- Tayyor. Birinchi super-admin faqat server env-var orqali yaratiladi:
+--   SEED_ADMIN_LOGIN va SEED_ADMIN_PASSWORD (kamida 8 belgi) o'rnating,
+--   so'ng /login sahifasini bir marta oching — admin avtomatik yaratiladi.
+--   Env-var'lar bo'lmasa, hech qanday default hisob yaratilmaydi (xavfsiz).
 -- ============================================================

@@ -72,13 +72,25 @@ export function Dashboard({
     }))
   }, [isYearly, year, monthDays])
 
-  const salespeople = employees.filter((e) => e.role === "salesperson")
+  const salespeople = useMemo(
+    () => employees.filter((e) => e.role === "salesperson"),
+    [employees],
+  )
+
+  // Both tables must aggregate the SAME population. page.tsx fetches every
+  // employee_daily row regardless of role, so restrict to salespeople here —
+  // otherwise a manager with personal daily rows would inflate the marketing
+  // KPIs while the employee table/export exclude them, and the tabs disagree.
+  const salesEmployeeDaily = useMemo(() => {
+    const ids = new Set(salespeople.map((e) => e.id))
+    return employeeDaily.filter((d) => ids.has(d.employee_id))
+  }, [salespeople, employeeDaily])
 
   const periodLabel = isYearly ? `${year}-yil` : monthLabel(month)
 
   function handleExport() {
     try {
-      exportWorkbook({ label: periodLabel, marketing, employees: salespeople, employeeDaily, employeePlans })
+      exportWorkbook({ label: periodLabel, marketing, employees: salespeople, employeeDaily: salesEmployeeDaily, employeePlans })
       toast.success("Excel fayli yuklab olindi")
     } catch {
       toast.error("Eksport qilishda xatolik")
@@ -163,7 +175,7 @@ export function Dashboard({
               granularity={granularity}
               periodHeader={isYearly ? "Oy" : "Kun"}
               marketing={marketing}
-              employeeDaily={employeeDaily}
+              employeeDaily={salesEmployeeDaily}
               plan={isYearly ? null : plan}
               canEdit={isManager && !isYearly}
               usdRate={usdRate}
@@ -177,7 +189,7 @@ export function Dashboard({
               granularity={granularity}
               periodHeader={isYearly ? "Oy" : "Kun"}
               employees={salespeople}
-              employeeDaily={employeeDaily}
+              employeeDaily={salesEmployeeDaily}
               employeePlans={isYearly ? [] : employeePlans}
               profile={profile}
               canEditData={!isYearly}

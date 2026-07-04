@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { pctTone } from "@/lib/calc"
-import { fmt } from "@/lib/rnp"
+import { fmtPct } from "@/lib/rnp"
 
 export function PctBadge({ value }: { value: number }) {
   const tone = pctTone(value)
@@ -17,7 +17,7 @@ export function PctBadge({ value }: { value: number }) {
         toneClasses[tone],
       )}
     >
-      {fmt(value)}%
+      {fmtPct(value)}%
     </span>
   )
 }

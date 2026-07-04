@@ -15,7 +15,9 @@ export function marketingRow(m: MarketingDaily, plan: PlanSettings | null) {
   const konversiyaPct = m.sifatli ? (m.sotuv / m.sifatli) * 100 : 0
 
   // plan_lead is the DAILY qualified-lead target. Reja % = qualified ÷ daily target.
-  const rejaLid = plan ? plan.plan_lead : 0
+  // Supabase returns numeric columns as strings ("0" is truthy!), so coerce first
+  // — otherwise a 0 target would divide through to Infinity ("∞%").
+  const rejaLid = Number(plan?.plan_lead) || 0
   const rejaPct = rejaLid ? (m.sifatli / rejaLid) * 100 : 0
 
   return { sifatsiz, leadNarxi, sotuvNarxi, sifatPct, konversiyaPct, rejaLid, rejaPct }
@@ -42,15 +44,21 @@ export function marketingTotals(
   const sifatPct = klassifikatsiya ? (jamiSifatli / klassifikatsiya) * 100 : 0
   const konversiyaPct = jamiSifatli ? (jamiSotuv / jamiSifatli) * 100 : 0
 
+  // Supabase returns numeric columns as strings ("0" is truthy), so coerce the
+  // plan targets to numbers before any division/guard — otherwise a 0 target
+  // slips past the truthiness guard and the ratio becomes Infinity ("∞%").
+  const planLead = Number(plan?.plan_lead) || 0
+  const planByudjet = Number(plan?.plan_byudjet) || 0
+  const planSotuv = Number(plan?.plan_sotuv) || 0
   // plan_lead is a DAILY qualified-lead target; the monthly target scales it by days.
-  const oylikSifatliReja = plan ? plan.plan_lead * monthDays : 0
+  const oylikSifatliReja = planLead * monthDays
   const rejaBajarilishi = oylikSifatliReja ? (jamiSifatli / oylikSifatliReja) * 100 : 0
-  const rejaByudjetPct = plan && plan.plan_byudjet ? (jamiByudjet / plan.plan_byudjet) * 100 : 0
+  const rejaByudjetPct = planByudjet ? (jamiByudjet / planByudjet) * 100 : 0
   // The sales plan (plan_sotuv) is a REVENUE target in USD, compared to Jami Tushum.
-  const rejaTushumPct = plan && plan.plan_sotuv ? (jamiTushum / plan.plan_sotuv) * 100 : 0
-  const rejaLid = plan ? plan.plan_lead : 0
-  const rejaByudjet = plan ? plan.plan_byudjet : 0
-  const rejaTushum = plan ? plan.plan_sotuv : 0
+  const rejaTushumPct = planSotuv ? (jamiTushum / planSotuv) * 100 : 0
+  const rejaLid = planLead
+  const rejaByudjet = planByudjet
+  const rejaTushum = planSotuv
 
   return {
     jamiByudjet,
