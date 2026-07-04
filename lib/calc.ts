@@ -8,14 +8,17 @@ export function marketingRow(m: MarketingDaily, plan: PlanSettings | null) {
   const leadNarxi = m.jami_lead ? m.byudjet / m.jami_lead : 0
   const sotuvNarxi = m.sotuv ? m.byudjet / m.sotuv : 0
 
-  // plan_lead is the DAILY qualified-lead (sifatli) target.
-  const rejaLid = plan ? plan.plan_lead : 0
-  // Sifat % = actual qualified leads that day ÷ the daily qualified-lead target.
-  const sifatPct = rejaLid ? (m.sifatli / rejaLid) * 100 : 0
+  // Sifat % = lead quality: qualified ÷ (qualified + unqualified).
+  const klassifikatsiya = m.sifatli + sifatsiz
+  const sifatPct = klassifikatsiya ? (m.sifatli / klassifikatsiya) * 100 : 0
   // Konversiya % = sales ÷ qualified leads.
   const konversiyaPct = m.sifatli ? (m.sotuv / m.sifatli) * 100 : 0
 
-  return { sifatsiz, leadNarxi, sotuvNarxi, sifatPct, konversiyaPct, rejaLid }
+  // plan_lead is the DAILY qualified-lead target. Reja % = qualified ÷ daily target.
+  const rejaLid = plan ? plan.plan_lead : 0
+  const rejaPct = rejaLid ? (m.sifatli / rejaLid) * 100 : 0
+
+  return { sifatsiz, leadNarxi, sotuvNarxi, sifatPct, konversiyaPct, rejaLid, rejaPct }
 }
 
 export function marketingTotals(
@@ -33,6 +36,11 @@ export function marketingTotals(
   const jamiSotuv = rows.reduce((s, r) => s + r.sotuv, 0)
   const ortLeadNarxi = jamiLead ? jamiByudjet / jamiLead : 0
   const ortSotuvNarxi = jamiSotuv ? jamiByudjet / jamiSotuv : 0
+
+  // Aggregate quality & conversion for the totals row.
+  const klassifikatsiya = jamiSifatli + jamiSifatsiz
+  const sifatPct = klassifikatsiya ? (jamiSifatli / klassifikatsiya) * 100 : 0
+  const konversiyaPct = jamiSifatli ? (jamiSotuv / jamiSifatli) * 100 : 0
 
   // plan_lead is a DAILY qualified-lead target; the monthly target scales it by days.
   const oylikSifatliReja = plan ? plan.plan_lead * monthDays : 0
@@ -53,6 +61,8 @@ export function marketingTotals(
     jamiTushum,
     ortLeadNarxi,
     ortSotuvNarxi,
+    sifatPct,
+    konversiyaPct,
     rejaBajarilishi,
     rejaByudjetPct,
     rejaTushumPct,
